@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "514201482437B4B30078DB4F"
-               BuildableName = "exponative.app"
-               BlueprintName = "exponative-macOS"
-               ReferencedContainer = "container:exponative.xcodeproj">
+               BuildableName = "rndfiddle.app"
+               BlueprintName = "rndfiddle-macOS"
+               ReferencedContainer = "container:rndfiddle.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "514201482437B4B30078DB4F"
-            BuildableName = "exponative.app"
-            BlueprintName = "exponative-macOS"
-            ReferencedContainer = "container:exponative.xcodeproj">
+            BuildableName = "rndfiddle.app"
+            BlueprintName = "rndfiddle-macOS"
+            ReferencedContainer = "container:rndfiddle.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "514201482437B4B30078DB4F"
-            BuildableName = "exponative.app"
-            BlueprintName = "exponative-macOS"
-            ReferencedContainer = "container:exponative.xcodeproj">
+            BuildableName = "rndfiddle.app"
+            BlueprintName = "rndfiddle-macOS"
+            ReferencedContainer = "container:rndfiddle.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
