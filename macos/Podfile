@@ -12,6 +12,7 @@ ENV['RCT_NEW_ARCH_ENABLED'] = "1";
 prepare_react_native_project!
 
 target 'rndfiddle-macOS' do
+  project 'rndfiddle.xcodeproj'
   platform :macos, '14.0'
   use_expo_modules!
 
