@@ -1,13 +1,10 @@
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { connectionProps } from "dubloon";
+import { StyleSheet } from "react-native";
+import { WebView } from "react-native-webview";
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+  // Where "8080" is the port for your web app's dev server.
+  return <WebView {...connectionProps({ port: 8080 })} />;
 }
 
 const styles = StyleSheet.create({
