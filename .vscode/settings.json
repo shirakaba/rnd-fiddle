@@ -8,16 +8,23 @@
   "eslint.enable": false,
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
+  "files.associations": {
+    "package.json": "json",
+  },
   "[javascript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true,
   },
   "[typescript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode",
-    "editor.formatOnSave": true
-  }
+    "editor.formatOnSave": true,
+  },
 }
