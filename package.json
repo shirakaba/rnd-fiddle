@@ -9,6 +9,8 @@
   "scripts": {
     "postinstall": "patch-package",
     "start": "expo start",
+    "prepare": "husky",
+    "lint-staged": "lint-staged",
     "format": "oxfmt",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -29,8 +31,15 @@
     "@rnx-kit/metro-config": "^2.2.4",
     "@types/react": "~19.1.0",
     "@typescript/native-preview": "catalog:",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "oxfmt": "^0.41.0",
     "patch-package": "^8.0.1"
+  },
+  "lint-staged": {
+    "*.{css,html,js,jsx,json,md,ts,tsx}": [
+      "oxfmt"
+    ]
   },
   "catalog": {
     "react": "19.1.4",
