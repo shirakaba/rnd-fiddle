@@ -2,12 +2,13 @@
   "js/ts.experimental.useTsgo": true,
   "oxc.fmt.configPath": ".oxfmtrc.json",
   "oxc.enable.oxfmt": true,
-  "oxc.enable.oxlint": true,
+  "oxc.enable.oxlint": false,
   "biome.enabled": false,
   "prettier.enable": false,
   "eslint.enable": false,
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
+  "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "always"
   },
