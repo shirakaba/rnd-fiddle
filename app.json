@@ -33,8 +33,8 @@
         "dubloon/plugin/build",
         {
           "config": {
-            "webWorkingDir": "../path/to/web/app",
-            "webOutputDir": "../path/to/web/app/build"
+            "webWorkingDir": "web",
+            "webOutputDir": "web/dist"
           }
         }
       ]

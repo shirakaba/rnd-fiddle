@@ -2,6 +2,9 @@
   "name": "rndfiddle",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "web"
+  ],
   "main": "index.ts",
   "scripts": {
     "postinstall": "patch-package",
@@ -12,7 +15,7 @@
     "macos": "react-native run-macos"
   },
   "dependencies": {
-    "dubloon": "^0.0.2",
+    "dubloon": "^0.0.4",
     "expo": "~54.0.33",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.4",
@@ -25,8 +28,13 @@
     "@react-native/metro-config": "~0.81.0",
     "@rnx-kit/metro-config": "^2.2.4",
     "@types/react": "~19.1.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260319.1",
+    "@typescript/native-preview": "catalog:",
     "oxfmt": "^0.41.0",
     "patch-package": "^8.0.1"
+  },
+  "catalog": {
+    "react": "19.1.4",
+    "react-dom": "^19.0.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260319.1"
   }
 }

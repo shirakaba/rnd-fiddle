@@ -1,6 +1,8 @@
 PODS:
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
+  - Dubloon (0.0.4):
+    - ExpoModulesCore
   - EXConstants (18.0.13):
     - ExpoModulesCore
   - Expo (54.0.33):
@@ -2358,6 +2360,7 @@ PODS:
 DEPENDENCIES:
   - boost (from `../node_modules/react-native-macos/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../node_modules/react-native-macos/third-party-podspecs/DoubleConversion.podspec`)
+  - Dubloon (from `../node_modules/dubloon/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
@@ -2447,6 +2450,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native-macos/third-party-podspecs/boost.podspec"
   DoubleConversion:
     :podspec: "../node_modules/react-native-macos/third-party-podspecs/DoubleConversion.podspec"
+  Dubloon:
+    :path: "../node_modules/dubloon/ios"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
   Expo:
@@ -2606,6 +2611,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: cea1d4f90a3a59537f3deb03ff5656489d7133dd
   DoubleConversion: d31b1eb37f6d6f456530c4fd9124b857d6889cab
+  Dubloon: acb12a2baac16139df55ffe7eb737871ec525367
   EXConstants: 3feb66fd1d94202fc1f0946d74e029d8b224b60e
   Expo: 8f20e31bd2c5a25e60261e248287cfecbcadc1c6
   ExpoAsset: d999f3bbd998a750f3b74cb913229848901b926b
@@ -2685,6 +2691,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 927965149d92a77941dba4f446f50786a95f8ecc
 
-PODFILE CHECKSUM: 5715a8161da919f4e1ad58c0a8c81a3f982f5377
+PODFILE CHECKSUM: cd2ea42700dd88cfa0641f236dffbd667862a362
 
 COCOAPODS: 1.16.2

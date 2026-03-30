@@ -167,6 +167,7 @@
 				381D8A6E24576A4E00465D17 /* Bundle React Native code and images */,
 				F7D6F0B5B24D25F4D82CEB72 /* [CP] Embed Pods Frameworks */,
 				4235082D1FD33391F436A17C /* [CP] Copy Pods Resources */,
+				7D069D372F7580A80075376E /* [Dubloon] Bundle and copy web app */,
 			);
 			buildRules = (
 			);
@@ -343,6 +344,24 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-rndfiddle-macOS/Pods-rndfiddle-macOS-resources.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		7D069D372F7580A80075376E /* [Dubloon] Bundle and copy web app */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Dubloon] Bundle and copy web app";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -x -e\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  exit 0\nfi\n\nif [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the macos directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\necho \"[Dubloon] Building the web app...\"\n\n# With reference to node_modules/react-native/scripts/react-native-xcode.sh\nexport WEB_CWD=$(\"$NODE_BINARY\" --print \"require('node:path').resolve('$PROJECT_ROOT', 'web')\")\necho \"[Dubloon] Resolved WEB_CWD as: \\\"$WEB_CWD\\\"\"\nexport DEST=$CONFIGURATION_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\n\npushd \"$WEB_CWD\"\n\"$NODE_BINARY\" --run build\npopd\n\necho \"[Dubloon] ... Built the web app.\"\n\necho \"[Dubloon] Copying the web app build into the app bundle...\"\nexport WEB_DIST=$(\"$NODE_BINARY\" --print \"require('node:path').resolve('$PROJECT_ROOT', 'web/dist')\")\necho \"[Dubloon] Resolved WEB_DIST as: \\\"$WEB_DIST\\\"\"\nmkdir -vp \"$DEST/web\"\ncp -r \"$WEB_DIST/\" \"$DEST/web\"\necho \"[Dubloon] ... Copied the web app build into the app bundle.\"\n";
 		};
 		F7D6F0B5B24D25F4D82CEB72 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
