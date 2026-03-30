@@ -1,155 +1,186 @@
-import { useState } from "react";
+import { useMemo, useState, type ReactElement } from "react";
 
-import heroImg from "./assets/hero.png";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
+import { EditorPane } from "./components/EditorPane";
+import {
+  buildInitialFiles,
+  compareEditors,
+  createLayout,
+  type EditorFile,
+  type FileId,
+  type LayoutNode,
+} from "./lib/editorLayout";
+
+const initiallyVisible: FileId[] = ["renderer.js", "index.html", "preload.js", "styles.css"];
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [files, setFiles] = useState<EditorFile[]>(() => buildInitialFiles());
+  const [visibleIds, setVisibleIds] = useState<FileId[]>(initiallyVisible);
+  const [activeId, setActiveId] = useState<FileId>("renderer.js");
+  const [maximizedId, setMaximizedId] = useState<FileId | null>(null);
+
+  const fileMap = useMemo(() => new Map(files.map((file) => [file.id, file] as const)), [files]);
+
+  const sortedVisibleIds = useMemo(() => [...visibleIds].sort(compareEditors), [visibleIds]);
+
+  const layout = useMemo(() => createLayout(sortedVisibleIds), [sortedVisibleIds]);
+
+  const handleChange = (id: FileId, value: string) => {
+    setFiles((current) => current.map((file) => (file.id === id ? { ...file, value } : file)));
+  };
+
+  const toggleVisibility = (id: FileId) => {
+    setVisibleIds((current) => {
+      if (current.includes(id)) {
+        const next = current.filter((fileId) => fileId !== id);
+
+        if (maximizedId === id) {
+          setMaximizedId(null);
+        }
+
+        if (activeId === id) {
+          setActiveId(next[0] ?? id);
+        }
+
+        return next;
+      }
+
+      return [...current, id].sort(compareEditors);
+    });
+  };
+
+  const hidePane = (id: FileId) => {
+    if (visibleIds.length === 1) {
+      return;
+    }
+
+    toggleVisibility(id);
+  };
+
+  const renderNode = (node: LayoutNode): ReactElement => {
+    if (typeof node === "string") {
+      const file = fileMap.get(node);
+      if (!file) {
+        return <></>;
+      }
+
+      return (
+        <EditorPane
+          key={file.id}
+          file={file}
+          isActive={activeId === file.id}
+          onChange={handleChange}
+          onFocus={setActiveId}
+          onHide={hidePane}
+          onMaximize={setMaximizedId}
+          onRestore={() => setMaximizedId(null)}
+          isMaximized={maximizedId === file.id}
+        />
+      );
+    }
+
+    return (
+      <div className={`split split--${node.direction}`}>
+        {renderNode(node.first)}
+        {renderNode(node.second)}
+      </div>
+    );
+  };
+
+  const activeFile = fileMap.get(activeId) ?? files[0];
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-281.5 flex-col border-x border-page-border text-center">
-      <section className="flex flex-1 flex-col place-content-center place-items-center gap-6.25 px-0 py-0 max-lg:gap-4.5 max-lg:px-5 max-lg:pt-8 max-lg:pb-6">
-        <div className="relative">
-          <img
-            src={heroImg}
-            className="relative z-0 mx-auto w-42.5"
-            width="170"
-            height="179"
-            alt=""
-          />
-          <img
-            src={reactLogo}
-            className="absolute inset-x-0 top-[34px] z-10 mx-auto h-7 [transform:perspective(2000px)_rotateZ(300deg)_rotateX(44deg)_rotateY(39deg)_scale(1.4)]"
-            alt="React logo"
-          />
-          <img
-            src={viteLogo}
-            className="absolute inset-x-0 top-[107px] z-0 mx-auto h-[26px] w-auto [transform:perspective(2000px)_rotateZ(300deg)_rotateX(40deg)_rotateY(39deg)_scale(0.8)]"
-            alt="Vite logo"
-          />
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="sidebar__brand">
+          <p className="sidebar__kicker">rnd-fiddle</p>
+          <h1>Web Fiddle</h1>
+          <p>A React-first take on Electron Fiddle’s multi-panel editor layout.</p>
         </div>
-        <div>
-          <h1 className="m-0 my-8 font-heading text-[56px] leading-none tracking-[-1.68px] text-page-heading max-lg:my-5 max-lg:text-4xl">
-            Get started
-          </h1>
+
+        <section className="sidebar__section">
+          <div className="sidebar__section-heading">
+            <span>Workspace files</span>
+            <span>{visibleIds.length} visible</span>
+          </div>
+
+          <div className="file-list">
+            {files.map((file) => {
+              const isVisible = visibleIds.includes(file.id);
+              const isActiveFile = activeId === file.id;
+
+              return (
+                <button
+                  key={file.id}
+                  type="button"
+                  className={`file-row ${isVisible ? "file-row--visible" : ""} ${
+                    isActiveFile ? "file-row--active" : ""
+                  }`}
+                  onClick={() => {
+                    if (!isVisible) {
+                      toggleVisibility(file.id);
+                    }
+                    setActiveId(file.id);
+                    setMaximizedId(null);
+                  }}
+                >
+                  <span>
+                    <strong>{file.id}</strong>
+                    <small>{file.label}</small>
+                  </span>
+                  <span className="file-row__meta">
+                    {file.readOnly ? <em>RO</em> : null}
+                    <i>{isVisible ? "Open" : "Hidden"}</i>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="sidebar__section sidebar__section--details">
+          <div className="sidebar__section-heading">
+            <span>Focused file</span>
+            <span>{activeFile.language}</span>
+          </div>
+          <h2>{activeFile.id}</h2>
           <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+            {activeFile.readOnly
+              ? "This file is visible for inspection, but editing is disabled."
+              : "Typing here updates only this pane, while layout remains independent from file state."}
           </p>
-        </div>
-        <button
-          className="mb-6 inline-flex rounded-[5px] border-2 border-transparent bg-page-accent-bg px-[10px] py-[5px] font-mono text-base text-page-accent transition-colors hover:border-page-accent-border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-page-accent"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        </section>
+      </aside>
 
-      <div className="relative w-full before:absolute before:top-[-4.5px] before:left-0 before:border-[5px] before:border-transparent before:border-l-page-border before:content-[''] after:absolute after:top-[-4.5px] after:right-0 after:border-[5px] after:border-transparent after:border-r-page-border after:content-['']" />
+      <main className="workspace">
+        <header className="workspace__header">
+          <div>
+            <p className="workspace__eyebrow">Monaco mosaic</p>
+            <h2>Alternating split layout, close/maximize controls, and focused file tracking.</h2>
+          </div>
+        </header>
 
-      <section className="flex border-t border-page-border text-left max-lg:flex-col max-lg:text-center">
-        <div className="flex-1 border-r border-page-border px-8 py-8 max-lg:border-r-0 max-lg:border-b max-lg:px-5 max-lg:py-6">
-          <svg
-            className="mb-4 h-[22px] w-[22px] max-lg:mx-auto"
-            role="presentation"
-            aria-hidden="true"
-          >
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2 className="mb-2 font-heading text-2xl leading-[1.18] tracking-[-0.24px] text-page-heading max-lg:text-[20px]">
-            Documentation
-          </h2>
-          <p>Your questions, answered</p>
-          <ul className="mt-8 flex list-none gap-2 p-0 max-lg:mt-5 max-lg:flex-wrap max-lg:justify-center">
-            <li className="max-lg:basis-[calc(50%-4px)]">
-              <a
-                className="flex items-center gap-2 rounded-md bg-page-social px-3 py-1.5 text-base text-page-heading no-underline transition-shadow hover:shadow-elevated max-lg:w-full max-lg:justify-center"
-                href="https://vite.dev/"
-                target="_blank"
-              >
-                <img className="h-[18px]" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li className="max-lg:basis-[calc(50%-4px)]">
-              <a
-                className="flex items-center gap-2 rounded-md bg-page-social px-3 py-1.5 text-base text-page-heading no-underline transition-shadow hover:shadow-elevated max-lg:w-full max-lg:justify-center"
-                href="https://react.dev/"
-                target="_blank"
-              >
-                <img className="h-[18px] w-[18px]" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div className="hidden flex-1 px-8 py-8 max-lg:px-5 max-lg:py-6">
-          <svg
-            className="mb-4 h-[22px] w-[22px] max-lg:mx-auto"
-            role="presentation"
-            aria-hidden="true"
-          >
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2 className="mb-2 font-heading text-2xl leading-[1.18] tracking-[-0.24px] text-page-heading max-lg:text-[20px]">
-            Connect with us
-          </h2>
-          <p>Join the Vite community</p>
-          <ul className="mt-8 flex list-none gap-2 p-0 max-lg:mt-5 max-lg:flex-wrap max-lg:justify-center">
-            <li className="max-lg:basis-[calc(50%-4px)]">
-              <a
-                className="flex items-center gap-2 rounded-md bg-page-social px-3 py-1.5 text-base text-page-heading no-underline transition-shadow hover:shadow-elevated max-lg:w-full max-lg:justify-center"
-                href="https://github.com/vitejs/vite"
-                target="_blank"
-              >
-                <svg className="h-[18px] w-[18px]" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li className="max-lg:basis-[calc(50%-4px)]">
-              <a
-                className="flex items-center gap-2 rounded-md bg-page-social px-3 py-1.5 text-base text-page-heading no-underline transition-shadow hover:shadow-elevated max-lg:w-full max-lg:justify-center"
-                href="https://chat.vite.dev/"
-                target="_blank"
-              >
-                <svg className="h-[18px] w-[18px]" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li className="max-lg:basis-[calc(50%-4px)]">
-              <a
-                className="flex items-center gap-2 rounded-md bg-page-social px-3 py-1.5 text-base text-page-heading no-underline transition-shadow hover:shadow-elevated max-lg:w-full max-lg:justify-center"
-                href="https://x.com/vite_js"
-                target="_blank"
-              >
-                <svg className="h-[18px] w-[18px]" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li className="max-lg:basis-[calc(50%-4px)]">
-              <a
-                className="flex items-center gap-2 rounded-md bg-page-social px-3 py-1.5 text-base text-page-heading no-underline transition-shadow hover:shadow-elevated max-lg:w-full max-lg:justify-center"
-                href="https://bsky.app/profile/vite.dev"
-                target="_blank"
-              >
-                <svg className="h-[18px] w-[18px]" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="relative w-full before:absolute before:top-[-4.5px] before:left-0 before:border-[5px] before:border-transparent before:border-l-page-border before:content-[''] after:absolute after:top-[-4.5px] after:right-0 after:border-[5px] after:border-transparent after:border-r-page-border after:content-['']" />
-      <section className="h-[88px] border-t border-page-border max-lg:h-12" />
+        <section className="workspace__body">
+          {maximizedId ? (
+            <EditorPane
+              file={fileMap.get(maximizedId)!}
+              isActive={activeId === maximizedId}
+              onChange={handleChange}
+              onFocus={setActiveId}
+              onHide={hidePane}
+              onMaximize={setMaximizedId}
+              onRestore={() => setMaximizedId(null)}
+              isMaximized
+            />
+          ) : layout ? (
+            renderNode(layout)
+          ) : (
+            <div className="workspace__empty">
+              <h3>No files visible</h3>
+              <p>Open a file from the left sidebar to bring a pane back into the workspace.</p>
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
