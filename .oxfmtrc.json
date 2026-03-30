@@ -11,5 +11,10 @@
       "unknown"
     ]
   },
+  "sortTailwindcss": {
+    "stylesheet": "./web/src/index.css",
+    "functions": ["twMerge"],
+    "preserveWhitespace": true
+  },
   "ignorePatterns": []
 }
