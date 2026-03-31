@@ -13,7 +13,8 @@
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.55.1",
     "react": "catalog:",
-    "react-dom": "19.1.4"
+    "react-dom": "19.1.4",
+    "react-mosaic-component": "^7.0.0-beta0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

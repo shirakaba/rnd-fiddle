@@ -24,14 +24,28 @@ export function EditorPane({
   isMaximized,
 }: EditorPaneProps) {
   return (
-    <div className={`mosaic-window mosaic-drop-target ${file.id} ${isActive ? "is-active" : ""}`}>
-      <div className="mosaic-window-toolbar">
-        <div role="toolbar" className="mosaic-window-toolbar__content">
+    <div
+      className={[
+        "mosaic-window mosaic-drop-target flex h-full flex-col overflow-hidden rounded-[8px] border bg-[rgba(251,251,251,0.92)] shadow-[var(--editor-shadow)]",
+        isActive
+          ? "border-[#a5bfcb] ring-1 ring-[rgba(99,147,173,0.2)]"
+          : "border-[var(--border-color-1)]",
+      ].join(" ")}
+    >
+      <div className="border-b border-[var(--border-color-1)] bg-[linear-gradient(180deg,#f7fafb,#ecf2f5)]">
+        <div
+          role="toolbar"
+          className="grid min-h-[42px] grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 max-[1100px]:grid-cols-[minmax(0,1fr)_auto]"
+        >
           <div>
-            <h5 className="mosaic-toolbar-severity-level-1">{file.label}</h5>
+            <h5 className="m-0 text-[13px] leading-[1.3] font-semibold text-[var(--text-color-2)]">
+              {file.label}
+            </h5>
           </div>
-          <div className="mosaic-window-toolbar__meta">{file.id}</div>
-          <div className="mosaic-controls">
+          <div className="text-[12px] whitespace-nowrap text-[var(--foreground-3)] max-[1100px]:hidden">
+            {file.id}
+          </div>
+          <div className="flex items-center gap-[6px]">
             <button
               type="button"
               className="bp3-button bp3-small"
@@ -55,9 +69,9 @@ export function EditorPane({
         </div>
       </div>
 
-      <div className="mosaic-window-body">
+      <div className="min-h-0 flex-1 bg-[#fffffe]">
         <div
-          className="editorContainer"
+          className="editorContainer h-full"
           data-testid="editorContainer"
           onFocusCapture={() => onFocus(file.id)}
         >

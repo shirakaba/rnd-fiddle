@@ -1,16 +1,37 @@
-import { useMemo, useState, type ReactElement } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Mosaic,
+  createBalancedTreeFromLeaves,
+  type LegacyMosaicNode,
+  type MosaicNode,
+} from "react-mosaic-component";
 
 import { EditorPane } from "./components/EditorPane";
 import {
   buildInitialFiles,
   compareEditors,
-  createLayout,
   type EditorFile,
   type FileId,
-  type LayoutNode,
 } from "./lib/editorLayout";
 
+type ShellPaneId = "sidebar" | "workspace";
+type SidebarPaneId = "editors" | "packages";
+
 const initiallyVisible: FileId[] = ["renderer.js", "index.html", "preload.js", "styles.css"];
+
+const initialShellLayout: LegacyMosaicNode<ShellPaneId> = {
+  direction: "row",
+  first: "sidebar",
+  second: "workspace",
+  splitPercentage: 18,
+};
+
+const initialSidebarLayout: LegacyMosaicNode<SidebarPaneId> = {
+  direction: "column",
+  first: "editors",
+  second: "packages",
+  splitPercentage: 56,
+};
 
 const packageVersions = {
   react: ["19.1.0", "19.0.0", "18.3.1"],
@@ -18,16 +39,30 @@ const packageVersions = {
   vite: ["8.0.1", "7.1.7", "6.4.5"],
 };
 
+function buildEditorTree(fileIds: FileId[]) {
+  return createBalancedTreeFromLeaves(fileIds, "row") as MosaicNode<FileId> | null;
+}
+
 function App() {
   const [files, setFiles] = useState<EditorFile[]>(() => buildInitialFiles());
   const [visibleIds, setVisibleIds] = useState<FileId[]>(initiallyVisible);
   const [activeId, setActiveId] = useState<FileId>("renderer.js");
   const [maximizedId, setMaximizedId] = useState<FileId | null>(null);
+  const [shellLayout, setShellLayout] = useState(initialShellLayout);
+  const [sidebarLayout, setSidebarLayout] = useState(initialSidebarLayout);
+  const [editorLayout, setEditorLayout] = useState<MosaicNode<FileId> | null>(() =>
+    buildEditorTree(initiallyVisible),
+  );
 
   const fileMap = useMemo(() => new Map(files.map((file) => [file.id, file] as const)), [files]);
   const sortedVisibleIds = useMemo(() => [...visibleIds].sort(compareEditors), [visibleIds]);
-  const layout = useMemo(() => createLayout(sortedVisibleIds), [sortedVisibleIds]);
-  const activeFile = fileMap.get(activeId) ?? files[0];
+  useEffect(() => {
+    if (maximizedId) {
+      return;
+    }
+
+    setEditorLayout(buildEditorTree(sortedVisibleIds));
+  }, [maximizedId, sortedVisibleIds]);
 
   const handleChange = (id: FileId, value: string) => {
     setFiles((current) => current.map((file) => (file.id === id ? { ...file, value } : file)));
@@ -42,8 +77,8 @@ function App() {
           setMaximizedId(null);
         }
 
-        if (activeId === id) {
-          setActiveId(next[0] ?? files[0]?.id ?? id);
+        if (activeId === id && next.length > 0) {
+          setActiveId(next[0]);
         }
 
         return next;
@@ -54,241 +89,225 @@ function App() {
   };
 
   const hidePane = (id: FileId) => {
-    if (visibleIds.length === 1) {
+    if (visibleIds.length <= 1) {
       return;
     }
 
     toggleVisibility(id);
   };
 
-  const renderNode = (node: LayoutNode): ReactElement => {
-    if (typeof node === "string") {
-      const file = fileMap.get(node);
-      if (!file) {
-        return <></>;
-      }
-
-      return (
-        <div className="mosaic-tile" key={file.id}>
-          <EditorPane
-            file={file}
-            isActive={activeId === file.id}
-            onChange={handleChange}
-            onFocus={setActiveId}
-            onHide={hidePane}
-            onMaximize={setMaximizedId}
-            onRestore={() => setMaximizedId(null)}
-            isMaximized={maximizedId === file.id}
-          />
-        </div>
-      );
+  const renderEditorTile = (id: FileId) => {
+    const file = fileMap.get(id);
+    if (!file) {
+      return <div />;
     }
 
     return (
-      <div className="mosaic-root mosaic-root--nested">
-        {renderNode(node.first)}
-        <div className={`mosaic-split -${node.direction}`}>
-          <div className="mosaic-split-line" />
-        </div>
-        {renderNode(node.second)}
-      </div>
+      <EditorPane
+        file={file}
+        isActive={activeId === file.id}
+        onChange={handleChange}
+        onFocus={setActiveId}
+        onHide={hidePane}
+        onMaximize={setMaximizedId}
+        onRestore={() => setMaximizedId(null)}
+        isMaximized={maximizedId === file.id}
+      />
     );
   };
 
-  return (
-    <div className="mosaic-blueprint-theme app-frame">
-      <div className="mosaic mosaic-drop-target app-mosaic">
-        <div className="mosaic-root app-root">
-          <div className="mosaic-tile app-sidebar-tile">
-            <div className="mosaic-blueprint-theme mosaic mosaic-drop-target sidebar-mosaic">
-              <div className="mosaic-root sidebar-root">
-                <div className="mosaic-tile sidebar-section sidebar-section--editors">
-                  <div className="fiddle-scrollbar">
-                    <div className="bp3-tree">
-                      <ul className="bp3-tree-node-list bp3-tree-root">
-                        <li className="bp3-tree-node bp3-tree-node-expanded">
-                          <div className="bp3-tree-node-content bp3-tree-node-content-0 bp3-tree-node-content--header">
-                            <span className="bp3-tree-node-caret-none" />
-                            <span
-                              className="bp3-tree-node-icon bp3-tree-node-icon--folder"
-                              aria-hidden="true"
-                            />
-                            <span className="bp3-tree-node-label">Editors</span>
-                            <span className="bp3-tree-node-secondary-label">
-                              <div className="bp3-button-group bp3-minimal toolbar-group">
-                                <button
-                                  type="button"
-                                  className="bp3-button bp3-small"
-                                  aria-label="Add editor"
-                                >
-                                  <span
-                                    className="button-icon button-icon--add"
-                                    aria-hidden="true"
-                                  />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="bp3-button bp3-small"
-                                  aria-label="Grid layout"
-                                >
-                                  <span
-                                    className="button-icon button-icon--grid"
-                                    aria-hidden="true"
-                                  />
-                                </button>
-                              </div>
-                            </span>
-                          </div>
-
-                          <div className="bp3-collapse">
-                            <div className="bp3-collapse-body" aria-hidden="false">
-                              <ul className="bp3-tree-node-list">
-                                {files.map((file) => {
-                                  const isVisible = visibleIds.includes(file.id);
-                                  const isActive = activeId === file.id;
-
-                                  return (
-                                    <li
-                                      className={`bp3-tree-node ${isActive ? "bp3-tree-node-selected" : ""}`}
-                                      key={file.id}
-                                    >
-                                      <div className="bp3-tree-node-content bp3-tree-node-content-1">
-                                        <span className="bp3-tree-node-caret-none" />
-                                        <span
-                                          className="bp3-tree-node-icon bp3-tree-node-icon--document"
-                                          aria-hidden="true"
-                                        />
-                                        <span className="bp3-tree-node-label">
-                                          <button
-                                            type="button"
-                                            className="pointer bp3-context-menu2 file-link"
-                                            onClick={() => {
-                                              if (!isVisible) {
-                                                toggleVisibility(file.id);
-                                              }
-                                              setActiveId(file.id);
-                                              setMaximizedId(null);
-                                            }}
-                                          >
-                                            {file.id}
-                                          </button>
-                                        </span>
-                                        <span className="bp3-tree-node-secondary-label">
-                                          <div className="bp3-button-group">
-                                            <button
-                                              type="button"
-                                              className="bp3-button bp3-minimal file-toggle"
-                                              onClick={() => toggleVisibility(file.id)}
-                                              aria-label={isVisible ? "Hide file" : "Show file"}
-                                            >
-                                              <span
-                                                className={`button-icon ${isVisible ? "button-icon--eye-open" : "button-icon--eye-off"}`}
-                                                aria-hidden="true"
-                                              />
-                                            </button>
-                                          </div>
-                                        </span>
-                                      </div>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mosaic-split -column">
-                  <div className="mosaic-split-line" />
-                </div>
-
-                <div className="mosaic-tile sidebar-section sidebar-section--packages">
-                  <div className="package-tree">
-                    <h5>Modules</h5>
-                    <div className="bp3-input-group bp3-fill">
-                      <input
-                        type="text"
-                        autoComplete="off"
-                        placeholder="Search..."
-                        className="bp3-input"
-                      />
-                    </div>
-                    <div className="bp3-tree">
-                      <ul className="bp3-tree-node-list bp3-tree-root">
-                        {Object.entries(packageVersions).map(([pkg, versions]) => (
-                          <li className="bp3-tree-node" key={pkg}>
-                            <div className="bp3-tree-node-content bp3-tree-node-content-0">
-                              <span className="bp3-tree-node-caret-none" />
-                              <span className="bp3-tree-node-label">{pkg}</span>
-                              <span className="bp3-tree-node-secondary-label package-tree-controls">
-                                <select
-                                  className="package-tree-version-select"
-                                  name={pkg}
-                                  defaultValue={versions[0]}
-                                >
-                                  {versions.map((version) => (
-                                    <option key={version}>{version}</option>
-                                  ))}
-                                </select>
-                                <button
-                                  type="button"
-                                  className="bp3-button bp3-minimal"
-                                  aria-label={`Remove ${pkg}`}
-                                >
-                                  <span
-                                    className="button-icon button-icon--remove"
-                                    aria-hidden="true"
-                                  />
-                                </button>
-                              </span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mosaic-split -row app-root-split">
-            <div className="mosaic-split-line" />
-          </div>
-
-          <div className="mosaic-tile app-workspace-tile">
-            <div className={`focused__${activeFile.id} mosaic mosaic-drop-target`}>
-              <div className="mosaic-root workspace-root">
-                {maximizedId ? (
-                  <div className="mosaic-tile mosaic-tile--full">
-                    <EditorPane
-                      file={fileMap.get(maximizedId)!}
-                      isActive={activeId === maximizedId}
-                      onChange={handleChange}
-                      onFocus={setActiveId}
-                      onHide={hidePane}
-                      onMaximize={setMaximizedId}
-                      onRestore={() => setMaximizedId(null)}
-                      isMaximized
-                    />
-                  </div>
-                ) : layout ? (
-                  renderNode(layout)
-                ) : (
-                  <div className="mosaic-tile mosaic-tile--full">
-                    <div className="workspace-empty">
-                      <h4>No visible editors</h4>
-                      <p>Use the left tree to reopen a file.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+  const editorsPanel = (
+    <section className="h-full overflow-hidden rounded-[8px] border border-[var(--border-color-1)] bg-[rgba(251,251,251,0.92)] shadow-[var(--editor-shadow)]">
+      <div className="h-full overflow-auto px-3 py-3">
+        <div className="mb-2 grid min-h-10 grid-cols-[12px_18px_minmax(0,1fr)_auto] items-center gap-2 rounded-[6px] border border-[#e1e7ea] bg-[linear-gradient(180deg,#f8fbfc,#eef4f7)] px-2">
+          <span className="h-3 w-3" />
+          <span className="bp3-tree-node-icon bp3-tree-node-icon--folder" aria-hidden="true" />
+          <span className="truncate text-[13px] font-semibold text-[var(--text-color-2)]">
+            Editors
+          </span>
+          <span className="flex items-center gap-1">
+            <button type="button" className="bp3-button bp3-small" aria-label="Add editor">
+              <span className="button-icon button-icon--add" aria-hidden="true" />
+            </button>
+            <button type="button" className="bp3-button bp3-small" aria-label="Grid layout">
+              <span className="button-icon button-icon--grid" aria-hidden="true" />
+            </button>
+          </span>
         </div>
+
+        <ul className="m-0 list-none p-0">
+          {files.map((file) => {
+            const isVisible = visibleIds.includes(file.id);
+            const isActive = activeId === file.id;
+
+            return (
+              <li key={file.id} className="m-0">
+                <div
+                  className={[
+                    "grid min-h-[34px] grid-cols-[12px_18px_minmax(0,1fr)_auto] items-center gap-2 rounded-[6px] px-2",
+                    isActive ? "bg-[linear-gradient(180deg,#deedf9,#d1e5f4)]" : "",
+                  ].join(" ")}
+                >
+                  <span className="h-3 w-3" />
+                  <span
+                    className="bp3-tree-node-icon bp3-tree-node-icon--document"
+                    aria-hidden="true"
+                  />
+                  <button
+                    type="button"
+                    className="truncate border-0 bg-transparent p-0 text-left text-[13px] text-[var(--text-color-2)] hover:text-[#0b216f]"
+                    onClick={() => {
+                      if (!isVisible) {
+                        toggleVisibility(file.id);
+                      }
+                      setActiveId(file.id);
+                      setMaximizedId(null);
+                    }}
+                  >
+                    {file.id}
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="bp3-button bp3-minimal"
+                      onClick={() => toggleVisibility(file.id)}
+                      aria-label={isVisible ? "Hide file" : "Show file"}
+                    >
+                      <span
+                        className={`button-icon ${isVisible ? "button-icon--eye-open" : "button-icon--eye-off"}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  );
+
+  const packagesPanel = (
+    <section className="h-full overflow-hidden rounded-[8px] border border-[var(--border-color-1)] bg-[rgba(251,251,251,0.92)] shadow-[var(--editor-shadow)]">
+      <div className="flex h-full flex-col gap-2 overflow-auto px-3 py-3">
+        <h5 className="m-0 text-[13px] leading-[1.3] font-semibold text-[var(--text-color-2)]">
+          Modules
+        </h5>
+        <div>
+          <input
+            type="text"
+            autoComplete="off"
+            placeholder="Search..."
+            className="h-8 w-full rounded-[6px] border border-[#cfd9de] bg-white px-[11px] text-[13px] text-[var(--text-color-1)] outline-none placeholder:text-[#83949c]"
+          />
+        </div>
+
+        <ul className="m-0 list-none p-0">
+          {Object.entries(packageVersions).map(([pkg, versions]) => (
+            <li key={pkg} className="m-0">
+              <div className="grid min-h-[34px] grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-2 rounded-[6px] px-2">
+                <span className="h-3 w-3" />
+                <span className="truncate text-[13px] text-[var(--text-color-2)]">{pkg}</span>
+                <span className="flex items-center gap-[6px]">
+                  <select
+                    className="h-7 max-w-32 rounded-[5px] border border-[#cfd9de] bg-white px-2 text-[12px] text-[var(--text-color-2)]"
+                    name={pkg}
+                    defaultValue={versions[0]}
+                  >
+                    {versions.map((version) => (
+                      <option key={version}>{version}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="bp3-button bp3-minimal"
+                    aria-label={`Remove ${pkg}`}
+                  >
+                    <span className="button-icon button-icon--remove" aria-hidden="true" />
+                  </button>
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+
+  const workspacePanel = maximizedId ? (
+    <div className="h-full">{renderEditorTile(maximizedId)}</div>
+  ) : editorLayout ? (
+    <Mosaic<FileId>
+      className="h-full w-full"
+      blueprintNamespace="bp3"
+      resize={{ minimumPaneSizePercentage: 18 }}
+      value={editorLayout}
+      onChange={(newNode) => setEditorLayout(newNode)}
+      onRelease={(newNode) => setEditorLayout(newNode)}
+      renderTile={(id) => renderEditorTile(id)}
+      zeroStateView={<div />}
+      mosaicId="editor-workspace"
+    />
+  ) : (
+    <div className="grid h-full place-items-center rounded-[8px] border border-[var(--border-color-1)] bg-[rgba(251,251,251,0.92)] text-center text-[var(--foreground-3)] shadow-[var(--editor-shadow)]">
+      <div>
+        <h4 className="m-0 text-[13px] leading-[1.3] font-semibold">No visible editors</h4>
+        <p className="mt-1 text-[13px]">Use the left tree to reopen a file.</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="h-full bg-[radial-gradient(circle_at_top_left,rgba(159,234,250,0.32),transparent_28%),linear-gradient(180deg,#eef6f8_0%,#f8fbfc_48%,#eef3f5_100%)] p-[14px]">
+      <div className="h-full overflow-hidden rounded-[14px] border border-white/60 bg-white/30 p-[3px] shadow-[0_22px_44px_rgba(37,110,128,0.08)] backdrop-blur-sm">
+        <Mosaic<ShellPaneId>
+          className="h-full w-full"
+          blueprintNamespace="bp3"
+          resize={{ minimumPaneSizePercentage: 12 }}
+          value={shellLayout}
+          onChange={(newNode) => {
+            if (newNode) {
+              setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
+            }
+          }}
+          onRelease={(newNode) => {
+            if (newNode) {
+              setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
+            }
+          }}
+          renderTile={(id) => {
+            if (id === "sidebar") {
+              return (
+                <Mosaic<SidebarPaneId>
+                  className="h-full w-full"
+                  blueprintNamespace="bp3"
+                  resize={{ minimumPaneSizePercentage: 24 }}
+                  value={sidebarLayout}
+                  onChange={(newNode) => {
+                    if (newNode) {
+                      setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
+                    }
+                  }}
+                  onRelease={(newNode) => {
+                    if (newNode) {
+                      setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
+                    }
+                  }}
+                  renderTile={(sidebarId) =>
+                    sidebarId === "editors" ? editorsPanel : packagesPanel
+                  }
+                  zeroStateView={<div />}
+                  mosaicId="sidebar-panels"
+                />
+              );
+            }
+
+            return <div className="h-full">{workspacePanel}</div>;
+          }}
+          zeroStateView={<div />}
+          mosaicId="fiddle-shell"
+        />
       </div>
     </div>
   );

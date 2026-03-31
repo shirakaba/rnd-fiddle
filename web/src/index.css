@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import "react-mosaic-component/react-mosaic-component.css";
+
 :root {
   color-scheme: light;
   --foreground-1: #9feafa;
@@ -37,9 +40,7 @@ body,
 
 body {
   min-height: 100svh;
-  background:
-    radial-gradient(circle at top left, rgba(159, 234, 250, 0.32), transparent 28%),
-    linear-gradient(180deg, #eef6f8 0%, #f8fbfc 48%, #eef3f5 100%);
+  font-family: var(--fonts-common);
   color: var(--text-color-1);
 }
 
@@ -50,154 +51,80 @@ textarea {
   font: inherit;
 }
 
-button {
-  cursor: pointer;
+.mosaic-root {
+  inset: 0;
 }
 
-.app-frame {
-  height: 100%;
+.mosaic-tile {
+  margin: 4px;
 }
 
-.app-mosaic,
-.app-root,
-.sidebar-mosaic,
-.sidebar-root,
-.workspace-root,
-.mosaic-root--nested,
-.mosaic-tile,
-.mosaic-window,
-.mosaic-window-body,
-.editorContainer,
-.monaco-editor {
-  min-width: 0;
-  min-height: 0;
+.mosaic-split {
+  z-index: 3;
 }
 
-.app-mosaic {
-  height: 100%;
-  padding: 14px;
+.mosaic-split:hover {
+  background: rgba(159, 234, 250, 0.18);
 }
 
-.app-root {
-  display: grid;
-  grid-template-columns: minmax(250px, 15%) 8px minmax(0, 1fr);
-  height: 100%;
-  gap: 0;
-}
-
-.sidebar-root {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) 8px minmax(260px, 42%);
-  height: 100%;
-}
-
-.workspace-root,
-.mosaic-root--nested {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  height: 100%;
-  gap: 0;
-}
-
-.mosaic-root--nested > .mosaic-split.-column,
-.sidebar-root > .mosaic-split.-column {
-  width: 100%;
-  height: 8px;
-}
-
-.mosaic-root--nested {
-  grid-auto-flow: row;
-  grid-auto-rows: minmax(0, 1fr);
-}
-
-.mosaic-root--nested > .mosaic-split.-row,
-.app-root > .mosaic-split.-row {
-  width: 8px;
-  height: 100%;
-}
-
-.mosaic-root--nested > .mosaic-split.-column,
-.sidebar-root > .mosaic-split.-column,
-.app-root > .mosaic-split.-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mosaic-split-line {
+.mosaic-split .mosaic-split-line {
   border-radius: 999px;
   background: linear-gradient(180deg, #d7e2e6, #c5d3d8);
 }
 
+.mosaic-split.-row {
+  margin-left: -4px;
+  width: 8px;
+}
+
+.mosaic-split.-column {
+  margin-top: -4px;
+  height: 8px;
+}
+
 .mosaic-split.-row .mosaic-split-line {
-  width: 2px;
-  height: calc(100% - 8px);
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  right: 3px;
 }
 
 .mosaic-split.-column .mosaic-split-line {
-  width: calc(100% - 8px);
-  height: 2px;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  right: 0;
 }
 
-.sidebar-section,
-.mosaic-window,
-.workspace-empty {
-  border: 1px solid var(--border-color-1);
-  border-radius: 8px;
-  background: rgba(251, 251, 251, 0.92);
-  box-shadow: var(--editor-shadow);
-}
-
-.sidebar-section {
-  overflow: hidden;
-}
-
-.fiddle-scrollbar,
-.package-tree {
-  height: 100%;
-  overflow: auto;
-}
-
-.bp3-tree,
-.package-tree {
-  padding: 10px 12px;
-}
-
-.bp3-tree-node-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.bp3-tree-node {
-  margin: 0;
-}
-
-.bp3-tree-node-content {
-  display: grid;
-  grid-template-columns: 12px 18px minmax(0, 1fr) auto;
+.bp3-button {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #ccd7dc;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #ffffff, #edf3f5);
+  color: #42555d;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.bp3-button:hover {
+  background: linear-gradient(180deg, #ffffff, #e5eef2);
+}
+
+.bp3-button.bp3-small {
+  min-width: 26px;
+  height: 26px;
   padding: 0 8px;
-  border-radius: 6px;
 }
 
-.bp3-tree-node-content--header {
-  min-height: 40px;
-  margin-bottom: 8px;
-  background: linear-gradient(180deg, #f8fbfc, #eef4f7);
-  border: 1px solid #e1e7ea;
-}
-
-.bp3-tree-node-selected > .bp3-tree-node-content {
-  background: linear-gradient(180deg, #deedf9, #d1e5f4);
-}
-
-.bp3-tree-node-caret-none {
-  width: 12px;
-  height: 12px;
+.bp3-button.bp3-minimal {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
 }
 
 .bp3-tree-node-icon {
@@ -252,45 +179,6 @@ button {
   box-shadow:
     0 3px 0 #75a0ae,
     0 6px 0 #75a0ae;
-}
-
-.bp3-tree-node-label,
-.bp3-tree-node-secondary-label {
-  min-width: 0;
-}
-
-.file-link {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--text-color-2);
-  font-size: 13px;
-  text-align: left;
-}
-
-.file-link:hover {
-  color: #0b216f;
-}
-
-.bp3-button-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.bp3-button {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid #ccd7dc;
-  border-radius: 5px;
-  background: linear-gradient(180deg, #ffffff, #edf3f5);
-  color: #42555d;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
 }
 
 .button-icon {
@@ -359,9 +247,9 @@ button {
   left: 6px;
   width: 2px;
   height: 12px;
+  background: currentColor;
   transform: rotate(45deg);
   border-radius: 999px;
-  background: currentColor;
 }
 
 .button-icon--maximize::before {
@@ -403,133 +291,6 @@ button {
   border-radius: 999px;
   background: currentColor;
   transform: rotate(-45deg);
-}
-
-.bp3-button:hover {
-  background: linear-gradient(180deg, #ffffff, #e5eef2);
-}
-
-.bp3-button.bp3-small {
-  min-width: 26px;
-  height: 26px;
-  padding: 0 8px;
-  font-size: 11px;
-}
-
-.bp3-button.bp3-minimal {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 6px;
-}
-
-.bp3-input-group {
-  margin-bottom: 12px;
-}
-
-.bp3-input {
-  width: 100%;
-  height: 32px;
-  padding: 0 11px;
-  border: 1px solid #cfd9de;
-  border-radius: 6px;
-  background: #ffffff;
-  color: var(--text-color-1);
-}
-
-.bp3-input::placeholder {
-  color: #83949c;
-}
-
-.package-tree h5,
-.mosaic-toolbar-severity-level-1,
-.workspace-empty h4 {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.package-tree {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.package-tree-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.package-tree-version-select {
-  max-width: 128px;
-  height: 28px;
-  padding: 0 8px;
-  border: 1px solid #cfd9de;
-  border-radius: 5px;
-  background: #ffffff;
-  color: var(--text-color-2);
-}
-
-.mosaic-window {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  height: 100%;
-  overflow: hidden;
-}
-
-.mosaic-window.is-active {
-  border-color: #a5bfcb;
-  box-shadow:
-    0 0 0 1px rgba(99, 147, 173, 0.2),
-    var(--editor-shadow);
-}
-
-.mosaic-window-toolbar {
-  border-bottom: 1px solid var(--border-color-1);
-  background: linear-gradient(180deg, #f7fafb, #ecf2f5);
-}
-
-.mosaic-window-toolbar__content {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 42px;
-  padding: 0 12px;
-}
-
-.mosaic-window-toolbar__meta {
-  color: var(--foreground-3);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.mosaic-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.mosaic-window-body {
-  background: #fffffe;
-}
-
-.editorContainer {
-  height: 100%;
-}
-
-.workspace-empty {
-  display: grid;
-  place-items: center;
-  height: 100%;
-  text-align: center;
-  color: var(--foreground-3);
-}
-
-.workspace-empty p {
-  margin: 6px 0 0;
-  font-size: 13px;
 }
 
 .monaco-editor,
@@ -590,39 +351,4 @@ button {
 .monaco-editor .bracket-match {
   background-color: rgba(0, 100, 0, 0.1);
   border: 1px solid #b9b9b9;
-}
-
-@media (max-width: 1100px) {
-  .app-root {
-    grid-template-columns: minmax(220px, 32%) 8px minmax(0, 1fr);
-  }
-
-  .mosaic-window-toolbar__content {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .mosaic-window-toolbar__meta {
-    display: none;
-  }
-}
-
-@media (max-width: 820px) {
-  .app-mosaic {
-    padding: 10px;
-  }
-
-  .app-root {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(320px, 42svh) 8px minmax(0, 1fr);
-  }
-
-  .app-root > .mosaic-split.-row {
-    width: 100%;
-    height: 8px;
-  }
-
-  .app-root > .mosaic-split.-row .mosaic-split-line {
-    width: calc(100% - 8px);
-    height: 2px;
-  }
 }
