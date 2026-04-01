@@ -60,6 +60,7 @@ header {
 .commands {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   height: 50px;
   padding: 10px;
   box-sizing: border-box;
@@ -87,9 +88,14 @@ header {
 
   & > div {
     display: flex;
+    align-items: center;
+
+    &:first-of-type {
+      margin-left: 20px;
+    }
 
     &:last-of-type {
-      margin-right: 10px;
+      margin-right: 20px;
 
       .bp3-button-group {
         margin-left: 5px;
@@ -99,6 +105,8 @@ header {
 
   .bp3-control-group {
     margin-right: 0.5rem;
+    align-items: center;
+    width: auto;
   }
 
   .address-bar {
@@ -128,7 +136,7 @@ header {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    align-self: stretch;
+    align-self: center;
     flex-shrink: 0;
     user-select: none;
     margin: auto 10px;

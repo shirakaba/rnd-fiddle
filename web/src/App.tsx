@@ -481,7 +481,7 @@ function App() {
             <ControlGroup fill={true} vertical={false}>
               <Button icon="cog" title="Setting" />
             </ControlGroup>
-            <ControlGroup fill={true} vertical={false}>
+            <ControlGroup fill={false} vertical={false}>
               <Button
                 id="version-chooser"
                 icon="saved"
@@ -497,7 +497,7 @@ function App() {
               />
               <Button icon="play" id="button-run" text="Run" />
             </ControlGroup>
-            <ControlGroup fill={true} vertical={false}>
+            <ControlGroup fill={false} vertical={false}>
               <Button
                 active={isConsoleShowing}
                 icon="console"
