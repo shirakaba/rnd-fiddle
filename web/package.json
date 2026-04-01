@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "vite --strictPort --port 5173",
     "build": "tsc -b && vite build",
     "format": "oxfmt",
     "preview": "vite preview"
