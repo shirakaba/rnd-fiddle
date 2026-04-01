@@ -1,3 +1,5 @@
+import type * as Monaco from "monaco-editor";
+
 import {
   Button,
   ButtonGroup,
@@ -78,6 +80,21 @@ const CONSOLE_OUTPUT = [
 ].join("\n");
 const MAIN_EDITOR_THEME = "fiddle-main";
 const OUTPUT_EDITOR_THEME = "fiddle-output";
+const DEFAULT_EDITOR_OPTIONS: Monaco.editor.IEditorOptions = {
+  automaticLayout: true,
+  minimap: { enabled: false },
+  wordWrap: "on",
+  fontSize: 12,
+};
+const DEFAULT_OUTPUT_OPTIONS: Monaco.editor.IEditorOptions = {
+  automaticLayout: true,
+  contextmenu: false,
+  fontSize: 12,
+  lineNumbersMinChars: 10,
+  minimap: { enabled: false },
+  readOnly: true,
+  wordWrap: "on",
+};
 
 function buildEditorTree(fileIds: FileId[]) {
   if (fileIds.length === 0) return null;
@@ -123,6 +140,18 @@ function App() {
   });
 
   const fileMap = useMemo(() => new Map(files.map((file) => [file.id, file] as const)), [files]);
+  const editorOptions = useMemo(
+    () => ({
+      ...DEFAULT_EDITOR_OPTIONS,
+    }),
+    [],
+  );
+  const outputOptions = useMemo(
+    () => ({
+      ...DEFAULT_OUTPUT_OPTIONS,
+    }),
+    [],
+  );
   const filteredPackageNames = useMemo(() => {
     const query = moduleQuery.trim().toLowerCase();
     if (!query) return [];
@@ -330,6 +359,10 @@ function App() {
         <EditorPane
           file={file}
           key={`${id}-${isDarkTheme ? "dark" : "light"}`}
+          monacoOptions={{
+            ...editorOptions,
+            readOnly: file.readOnly,
+          }}
           onChange={updateFileValue}
           onEditorWillMount={(monaco) => {
             monaco.editor.defineTheme(MAIN_EDITOR_THEME, {
@@ -402,13 +435,7 @@ function App() {
         key={`output-${isDarkTheme ? "dark" : "light"}`}
         language="consoleOutputLanguage"
         options={{
-          automaticLayout: true,
-          contextmenu: false,
-          fontSize: 12,
-          lineNumbersMinChars: 10,
-          minimap: { enabled: false },
-          readOnly: true,
-          wordWrap: "on",
+          ...outputOptions,
         }}
         theme={OUTPUT_EDITOR_THEME}
         value={CONSOLE_OUTPUT}
