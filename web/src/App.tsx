@@ -78,42 +78,6 @@ const CONSOLE_OUTPUT = [
 const MAIN_EDITOR_THEME = "fiddle-main";
 const OUTPUT_EDITOR_THEME = "fiddle-output";
 
-const LIGHT_THEME_VARS = {
-  "foreground-1": "#9feafa",
-  "foreground-2": "#256e80",
-  "foreground-3": "#608291",
-  "background-4": "#fbfbfb",
-  "background-3": "#fbfbfb",
-  "background-2": "#d6dde0",
-  "background-1": "#f5f5f5",
-  "border-color-2": "#1e2527",
-  "border-color-1": "#d8dae2",
-  border: "1px solid var(--border-color-1)",
-  "button-text-color": "#fff",
-  "text-color-1": "#000000",
-  "text-color-2": "#1e2527",
-  "text-color-3": "#0e0e0e",
-  "error-color": "#df3434",
-} as const;
-
-const DARK_THEME_VARS = {
-  "foreground-1": "#9feafa",
-  "foreground-2": "#8ac7d6",
-  "foreground-3": "#608291",
-  "background-4": "#21232d",
-  "background-3": "#2c2e3b",
-  "background-2": "#1d2427",
-  "background-1": "#2f3241",
-  "border-color-2": "#1e2527",
-  "border-color-1": "#5c5f71",
-  border: "1px solid var(--border-color-1)",
-  "button-text-color": "#000",
-  "text-color-1": "#ffffff",
-  "text-color-2": "#1e2527",
-  "text-color-3": "#dcdcdc",
-  "error-color": "#df3434",
-} as const;
-
 function buildEditorTree(fileIds: FileId[]) {
   if (fileIds.length === 0) return null;
   return createBalancedTreeFromLeaves(
@@ -193,14 +157,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const themeVars = isDarkTheme ? DARK_THEME_VARS : LIGHT_THEME_VARS;
-    const root = document.documentElement;
-
-    for (const [key, value] of Object.entries(themeVars)) {
-      root.style.setProperty(`--${key}`, value);
-    }
-
-    root.style.colorScheme = isDarkTheme ? "dark" : "light";
     document.body.classList.toggle("bp3-dark", isDarkTheme);
   }, [isDarkTheme]);
 

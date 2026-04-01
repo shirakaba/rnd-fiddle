@@ -24,6 +24,27 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --foreground-1: #9feafa;
+    --foreground-2: #8ac7d6;
+    --foreground-3: #608291;
+    --background-4: #21232d;
+    --background-3: #2c2e3b;
+    --background-2: #1d2427;
+    --background-1: #2f3241;
+    --border-color-2: #1e2527;
+    --border-color-1: #5c5f71;
+    --border: 1px solid var(--border-color-1);
+    --button-text-color: #000000;
+    --text-color-1: #ffffff;
+    --text-color-2: #1e2527;
+    --text-color-3: #dcdcdc;
+    --error-color: #df3434;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
