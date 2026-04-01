@@ -401,7 +401,7 @@ function App() {
               "editorLineNumber.foreground": isDarkTheme ? "#8ac7d6" : "#5f6b7c",
               "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
               "editor.lineHighlightBackground": isDarkTheme ? "#232b30" : "#dbe2e6",
-              "editor.lineHighlightBorder": isDarkTheme ? "#232b30" : "#dbe2e6",
+              "editor.lineHighlightBorder": isDarkTheme ? "#232b30" : "#eeeeee",
               "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
             },
           });

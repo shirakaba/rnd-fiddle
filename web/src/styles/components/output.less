@@ -19,4 +19,14 @@
       background: var(--background-2);
     }
   }
+
+  /* A slight divergence from the original output.less */
+  body:not(.bp3-dark) & {
+    .monaco-editor .current-line.current-line-exact,
+    .monaco-editor .current-line.current-line-margin,
+    .monaco-editor .current-line.current-line-margin-both,
+    .monaco-editor .margin-view-overlays .current-line {
+      border-color: #eeeeee !important;
+    }
+  }
 }
