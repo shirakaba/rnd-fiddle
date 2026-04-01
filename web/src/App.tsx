@@ -76,6 +76,42 @@ const CONSOLE_OUTPUT = [
   "[10:24:19 AM] Ready. Press Run to launch the sample app.",
 ].join("\n");
 
+const LIGHT_THEME_VARS = {
+  "foreground-1": "#9feafa",
+  "foreground-2": "#256e80",
+  "foreground-3": "#608291",
+  "background-4": "#fbfbfb",
+  "background-3": "#fbfbfb",
+  "background-2": "#d6dde0",
+  "background-1": "#f5f5f5",
+  "border-color-2": "#1e2527",
+  "border-color-1": "#d8dae2",
+  border: "1px solid var(--border-color-1)",
+  "button-text-color": "#fff",
+  "text-color-1": "#000000",
+  "text-color-2": "#1e2527",
+  "text-color-3": "#0e0e0e",
+  "error-color": "#df3434",
+} as const;
+
+const DARK_THEME_VARS = {
+  "foreground-1": "#9feafa",
+  "foreground-2": "#8ac7d6",
+  "foreground-3": "#608291",
+  "background-4": "#21232d",
+  "background-3": "#2c2e3b",
+  "background-2": "#1d2427",
+  "background-1": "#2f3241",
+  "border-color-2": "#1e2527",
+  "border-color-1": "#5c5f71",
+  border: "1px solid var(--border-color-1)",
+  "button-text-color": "#000",
+  "text-color-1": "#ffffff",
+  "text-color-2": "#1e2527",
+  "text-color-3": "#dcdcdc",
+  "error-color": "#df3434",
+} as const;
+
 function buildEditorTree(fileIds: FileId[]) {
   if (fileIds.length === 0) return null;
   return createBalancedTreeFromLeaves(
@@ -114,6 +150,10 @@ function App() {
   const [moduleQuery, setModuleQuery] = useState("");
   const [packages, setPackages] = useState(INITIAL_PACKAGES);
   const [isConsoleShowing, setIsConsoleShowing] = useState(true);
+  const [isDarkTheme, setIsDarkTheme] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   const fileMap = useMemo(() => new Map(files.map((file) => [file.id, file] as const)), [files]);
   const filteredPackageNames = useMemo(() => {
@@ -135,6 +175,32 @@ function App() {
       document.body.classList.remove("fiddle");
     };
   }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (event: MediaQueryListEvent) => {
+      setIsDarkTheme(event.matches);
+    };
+
+    setIsDarkTheme(mediaQuery.matches);
+    mediaQuery.addEventListener("change", onChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const themeVars = isDarkTheme ? DARK_THEME_VARS : LIGHT_THEME_VARS;
+    const root = document.documentElement;
+
+    for (const [key, value] of Object.entries(themeVars)) {
+      root.style.setProperty(`--${key}`, value);
+    }
+
+    root.style.colorScheme = isDarkTheme ? "dark" : "light";
+    document.body.classList.toggle("bp3-dark", isDarkTheme);
+  }, [isDarkTheme]);
 
   useEffect(() => {
     if (maximizedEditor) return;
@@ -306,16 +372,17 @@ function App() {
           <Editor
             beforeMount={(monaco) => {
               monaco.editor.defineTheme("main", {
-                base: "vs",
+                base: isDarkTheme ? "vs-dark" : "vs",
                 inherit: true,
-                rules: [],
+                rules: [{ token: "custom-date", foreground: "008800" }],
                 colors: {
-                  "editor.background": "#fbfbfb",
+                  "editor.background": isDarkTheme ? "#2f3241" : "#fbfbfb",
                 },
               });
             }}
             className="editor"
             defaultLanguage={file.language}
+            key={`${id}-${isDarkTheme ? "dark" : "light"}`}
             language={file.language}
             onChange={(value) => updateFileValue(id, value)}
             onMount={(editor) => {
@@ -362,12 +429,12 @@ function App() {
       <Editor
         beforeMount={(monaco) => {
           monaco.editor.defineTheme("output-theme", {
-            base: "vs",
+            base: isDarkTheme ? "vs-dark" : "vs",
             inherit: true,
-            rules: [{ token: "custom-date", foreground: "5f6b7c" }],
+            rules: [{ token: "custom-date", foreground: isDarkTheme ? "8ac7d6" : "5f6b7c" }],
             colors: {
-              "editor.background": "#d6dde0",
-              "editorLineNumber.foreground": "#5f6b7c",
+              "editor.background": isDarkTheme ? "#1d2427" : "#d6dde0",
+              "editorLineNumber.foreground": isDarkTheme ? "#8ac7d6" : "#5f6b7c",
             },
           });
           monaco.languages.register({ id: "consoleOutputLanguage" });
@@ -378,6 +445,7 @@ function App() {
           });
         }}
         defaultLanguage="consoleOutputLanguage"
+        key={`output-${isDarkTheme ? "dark" : "light"}`}
         language="consoleOutputLanguage"
         options={{
           automaticLayout: true,
