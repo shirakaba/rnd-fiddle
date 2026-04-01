@@ -52,4 +52,14 @@
   .editorContainer {
     background: @background-1;
   }
+
+  /* A slight divergence from the original mosaic.less */
+  &.bp3-dark,
+  .bp3-dark & {
+    .monaco-editor .current-line.current-line-margin,
+    .monaco-editor .current-line.current-line-margin-both,
+    .monaco-editor .margin-view-overlays .current-line {
+      border-color: #3f4456 !important;
+    }
+  }
 }

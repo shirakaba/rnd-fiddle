@@ -75,6 +75,8 @@ const CONSOLE_OUTPUT = [
   "[10:24:18 AM] Using template react-native-fiddle-repro-0.81.2",
   "[10:24:19 AM] Ready. Press Run to launch the sample app.",
 ].join("\n");
+const MAIN_EDITOR_THEME = "fiddle-main";
+const OUTPUT_EDITOR_THEME = "fiddle-output";
 
 const LIGHT_THEME_VARS = {
   "foreground-1": "#9feafa",
@@ -371,12 +373,17 @@ function App() {
         <div className="editorContainer">
           <Editor
             beforeMount={(monaco) => {
-              monaco.editor.defineTheme("main", {
+              monaco.editor.defineTheme(MAIN_EDITOR_THEME, {
                 base: isDarkTheme ? "vs-dark" : "vs",
                 inherit: true,
                 rules: [{ token: "custom-date", foreground: "008800" }],
                 colors: {
                   "editor.background": isDarkTheme ? "#2f3241" : "#fbfbfb",
+                  "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
+                  "editorLineNumber.foreground": isDarkTheme ? "#8a9ba8" : "#5f6b7c",
+                  "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
+                  "editor.lineHighlightBorder": isDarkTheme ? "#3f4456" : "#d8dae2",
+                  "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
                 },
               });
             }}
@@ -394,9 +401,9 @@ function App() {
               wordWrap: "on",
               fontSize: 12,
               readOnly: file.readOnly,
-              theme: "main",
             }}
             path={id}
+            theme={MAIN_EDITOR_THEME}
             value={file.value}
           />
         </div>
@@ -428,13 +435,18 @@ function App() {
     <div className="output" style={{ display: isConsoleShowing ? "inline-block" : "none" }}>
       <Editor
         beforeMount={(monaco) => {
-          monaco.editor.defineTheme("output-theme", {
+          monaco.editor.defineTheme(OUTPUT_EDITOR_THEME, {
             base: isDarkTheme ? "vs-dark" : "vs",
             inherit: true,
             rules: [{ token: "custom-date", foreground: isDarkTheme ? "8ac7d6" : "5f6b7c" }],
             colors: {
               "editor.background": isDarkTheme ? "#1d2427" : "#d6dde0",
+              "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
               "editorLineNumber.foreground": isDarkTheme ? "#8ac7d6" : "#5f6b7c",
+              "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
+              "editor.lineHighlightBackground": isDarkTheme ? "#232b30" : "#dbe2e6",
+              "editor.lineHighlightBorder": isDarkTheme ? "#232b30" : "#dbe2e6",
+              "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
             },
           });
           monaco.languages.register({ id: "consoleOutputLanguage" });
@@ -455,8 +467,8 @@ function App() {
           minimap: { enabled: false },
           readOnly: true,
           wordWrap: "on",
-          theme: "output-theme",
         }}
+        theme={OUTPUT_EDITOR_THEME}
         value={CONSOLE_OUTPUT}
       />
     </div>
