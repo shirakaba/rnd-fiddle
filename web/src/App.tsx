@@ -15,7 +15,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Mosaic,
   MosaicWindow,
+  convertLegacyToNary,
   createBalancedTreeFromLeaves,
+  isSplitNode,
   type LegacyMosaicNode,
   type MosaicNode,
   type MosaicPath,
@@ -61,6 +63,11 @@ const WRAPPER_LAYOUT_WITHOUT_CONSOLE: LegacyMosaicNode<WrapperEditorId> = {
   },
   splitPercentage: 0,
 };
+
+function getWrapperSplitPercentage(node: MosaicNode<WrapperEditorId> | null) {
+  if (!isSplitNode(node)) return null;
+  return node.splitPercentages?.[0] ?? 50;
+}
 const SIDEBAR_LAYOUT: LegacyMosaicNode<SidebarPaneId> = {
   direction: "column",
   first: "fileTree",
@@ -90,7 +97,7 @@ const DEFAULT_OUTPUT_OPTIONS: Monaco.editor.IEditorOptions = {
   automaticLayout: true,
   contextmenu: false,
   fontSize: 12,
-  lineNumbersMinChars: 10,
+  lineNumbersMinChars: 3,
   minimap: { enabled: false },
   readOnly: true,
   wordWrap: "on",
@@ -130,6 +137,9 @@ function App() {
     buildEditorTree(INITIAL_VISIBLE_EDITORS),
   );
   const [version, setVersion] = useState(AVAILABLE_VERSIONS[0]);
+  const [wrapperLayout, setWrapperLayout] = useState<MosaicNode<WrapperEditorId>>(
+    () => convertLegacyToNary(WRAPPER_LAYOUT_WITH_CONSOLE) as MosaicNode<WrapperEditorId>,
+  );
   const [gistUrl, setGistUrl] = useState("");
   const [moduleQuery, setModuleQuery] = useState("");
   const [packages, setPackages] = useState(INITIAL_PACKAGES);
@@ -194,6 +204,33 @@ function App() {
     if (maximizedEditor) return;
     setEditorLayout(buildEditorTree(visibleEditors));
   }, [maximizedEditor, visibleEditors]);
+
+  useEffect(() => {
+    setWrapperLayout((current) => {
+      if (!isSplitNode(current)) {
+        return convertLegacyToNary(
+          isConsoleShowing ? WRAPPER_LAYOUT_WITH_CONSOLE : WRAPPER_LAYOUT_WITHOUT_CONSOLE,
+        ) as MosaicNode<WrapperEditorId>;
+      }
+
+      const currentSplitPercentage = getWrapperSplitPercentage(current);
+      if (!isConsoleShowing && currentSplitPercentage !== 0) {
+        return {
+          ...current,
+          splitPercentages: [0, 100],
+        };
+      }
+
+      if (isConsoleShowing && currentSplitPercentage === 0) {
+        return {
+          ...current,
+          splitPercentages: [25, 75],
+        };
+      }
+
+      return current;
+    });
+  }, [isConsoleShowing]);
 
   const hideEditor = (id: FileId) => {
     if (visibleEditors.length <= 1) return;
@@ -555,16 +592,22 @@ function App() {
       </header>
       <Mosaic<WrapperEditorId>
         blueprintNamespace="bp3"
-        initialValue={
-          isConsoleShowing ? WRAPPER_LAYOUT_WITH_CONSOLE : WRAPPER_LAYOUT_WITHOUT_CONSOLE
-        }
-        key={isConsoleShowing ? "console-visible" : "console-hidden"}
+        onChange={(nextLayout) => {
+          if (nextLayout === null) return;
+          setWrapperLayout(nextLayout);
+
+          const splitPercentage = getWrapperSplitPercentage(nextLayout);
+          if (splitPercentage !== null) {
+            setIsConsoleShowing(splitPercentage !== 0);
+          }
+        }}
         renderTile={(id) => {
           if (id === "output") return outputPane;
           if (id === "sidebar") return sidebarPane;
           return editorsPane;
         }}
         resize={{ minimumPaneSizePercentage: 15 }}
+        value={wrapperLayout}
       />
     </div>
   );
