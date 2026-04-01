@@ -259,56 +259,52 @@ function App() {
   );
 
   return (
-    <div className="h-full bg-[radial-gradient(circle_at_top_left,rgba(159,234,250,0.32),transparent_28%),linear-gradient(180deg,#eef6f8_0%,#f8fbfc_48%,#eef3f5_100%)] p-[14px]">
-      <div className="h-full overflow-hidden rounded-[14px] border border-white/60 bg-white/30 p-[3px] shadow-[0_22px_44px_rgba(37,110,128,0.08)] backdrop-blur-sm">
-        <Mosaic<ShellPaneId>
-          className="h-full w-full"
-          blueprintNamespace="bp3"
-          resize={{ minimumPaneSizePercentage: 12 }}
-          value={shellLayout}
-          onChange={(newNode) => {
-            if (newNode) {
-              setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
-            }
-          }}
-          onRelease={(newNode) => {
-            if (newNode) {
-              setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
-            }
-          }}
-          renderTile={(id) => {
-            if (id === "sidebar") {
-              return (
-                <Mosaic<SidebarPaneId>
-                  className="h-full w-full"
-                  blueprintNamespace="bp3"
-                  resize={{ minimumPaneSizePercentage: 24 }}
-                  value={sidebarLayout}
-                  onChange={(newNode) => {
-                    if (newNode) {
-                      setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
-                    }
-                  }}
-                  onRelease={(newNode) => {
-                    if (newNode) {
-                      setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
-                    }
-                  }}
-                  renderTile={(sidebarId) =>
-                    sidebarId === "editors" ? editorsPanel : packagesPanel
+    <div className="bg-white/30shadow-[0_22px_44px_rgba(37,110,128,0.08)] h-full overflow-hidden border border-white/60">
+      <Mosaic<ShellPaneId>
+        className="h-full w-full"
+        blueprintNamespace="bp3"
+        resize={{ minimumPaneSizePercentage: 12 }}
+        value={shellLayout}
+        onChange={(newNode) => {
+          if (newNode) {
+            setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
+          }
+        }}
+        onRelease={(newNode) => {
+          if (newNode) {
+            setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
+          }
+        }}
+        renderTile={(id) => {
+          if (id === "sidebar") {
+            return (
+              <Mosaic<SidebarPaneId>
+                className="h-full w-full"
+                blueprintNamespace="bp3"
+                resize={{ minimumPaneSizePercentage: 24 }}
+                value={sidebarLayout}
+                onChange={(newNode) => {
+                  if (newNode) {
+                    setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
                   }
-                  zeroStateView={<div />}
-                  mosaicId="sidebar-panels"
-                />
-              );
-            }
+                }}
+                onRelease={(newNode) => {
+                  if (newNode) {
+                    setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
+                  }
+                }}
+                renderTile={(sidebarId) => (sidebarId === "editors" ? editorsPanel : packagesPanel)}
+                zeroStateView={<div />}
+                mosaicId="sidebar-panels"
+              />
+            );
+          }
 
-            return <div className="h-full">{workspacePanel}</div>;
-          }}
-          zeroStateView={<div />}
-          mosaicId="fiddle-shell"
-        />
-      </div>
+          return <div className="h-full">{workspacePanel}</div>;
+        }}
+        zeroStateView={<div />}
+        mosaicId="fiddle-shell"
+      />
     </div>
   );
 }
