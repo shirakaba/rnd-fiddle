@@ -20,6 +20,7 @@ import {
   type MosaicWindowProps,
 } from "react-mosaic-component";
 
+import { EditorPane } from "./components/EditorPane";
 import {
   buildInitialFiles,
   compareEditors,
@@ -326,43 +327,28 @@ function App() {
         renderToolbar={(props) => renderEditorToolbar(props, id)}
         title={getEditorTitle(id)}
       >
-        <div className="editorContainer">
-          <Editor
-            beforeMount={(monaco) => {
-              monaco.editor.defineTheme(MAIN_EDITOR_THEME, {
-                base: isDarkTheme ? "vs-dark" : "vs",
-                inherit: true,
-                rules: [{ token: "custom-date", foreground: "008800" }],
-                colors: {
-                  "editor.background": isDarkTheme ? "#2f3241" : "#fbfbfb",
-                  "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
-                  "editorLineNumber.foreground": isDarkTheme ? "#8a9ba8" : "#5f6b7c",
-                  "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
-                  "editor.lineHighlightBorder": isDarkTheme ? "#3f4456" : "#d8dae2",
-                  "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
-                },
-              });
-            }}
-            className="editor"
-            defaultLanguage={file.language}
-            key={`${id}-${isDarkTheme ? "dark" : "light"}`}
-            language={file.language}
-            onChange={(value) => updateFileValue(id, value)}
-            onMount={(editor) => {
-              if (focusedEditor === id) editor.focus();
-            }}
-            options={{
-              automaticLayout: true,
-              minimap: { enabled: false },
-              wordWrap: "on",
-              fontSize: 12,
-              readOnly: file.readOnly,
-            }}
-            path={id}
-            theme={MAIN_EDITOR_THEME}
-            value={file.value}
-          />
-        </div>
+        <EditorPane
+          file={file}
+          key={`${id}-${isDarkTheme ? "dark" : "light"}`}
+          onChange={updateFileValue}
+          onEditorWillMount={(monaco) => {
+            monaco.editor.defineTheme(MAIN_EDITOR_THEME, {
+              base: isDarkTheme ? "vs-dark" : "vs",
+              inherit: true,
+              rules: [{ token: "custom-date", foreground: "008800" }],
+              colors: {
+                "editor.background": isDarkTheme ? "#2f3241" : "#fbfbfb",
+                "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
+                "editorLineNumber.foreground": isDarkTheme ? "#8a9ba8" : "#5f6b7c",
+                "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
+                "editor.lineHighlightBorder": isDarkTheme ? "#3f4456" : "#d8dae2",
+                "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
+              },
+            });
+          }}
+          onFocus={setFocusedEditor}
+          theme={MAIN_EDITOR_THEME}
+        />
       </MosaicWindow>
     );
   };
