@@ -1,0 +1,53 @@
+.fiddle.bp3-dark {
+  .bp3-control input:focus ~ .bp3-control-indicator {
+    outline: @blue3 solid 2px;
+  }
+
+  .bp3-menu,
+  .bp3-popover .bp3-popover-content,
+  .bp3-popover2 .bp3-popover2-content {
+    background-color: @background-1;
+  }
+
+  .bp3-popover .bp3-popover-arrow-fill,
+  .bp3-popover2 .bp3-popover2-arrow-fill {
+    fill: @background-1;
+  }
+
+  .bp3-button:not([class*='bp3-intent-']) {
+    background-color: @background-1;
+  }
+
+  .bp3-button.bp3-minimal {
+    background-color: unset;
+  }
+
+  .bp3-button:hover,
+  .bp3-button.bp3-minimal:hover {
+    background-color: rgba(138, 155, 168, 0.15);
+  }
+
+  .bp3-button:focus {
+    outline: @blue3 solid 2px;
+  }
+
+  .bp3-menu-item.bp3-active.bp3-intent-primary {
+    background-color: @foreground-3;
+  }
+
+  .bp3-dialog {
+    background-color: @background-4;
+
+    .bp3-dialog-header {
+      background-color: @background-3;
+    }
+  }
+
+  .bp3-running-text {
+    font-size: 14px;
+  }
+
+  .bp3-alert-contents {
+    width: 100%;
+  }
+}

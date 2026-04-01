@@ -1,12 +1,25 @@
+import {
+  Button,
+  ButtonGroup,
+  ControlGroup,
+  InputGroup,
+  NonIdealState,
+  Tree,
+  type TreeNodeInfo,
+} from "@blueprintjs/core";
+import Editor from "@monaco-editor/react";
+import classNames from "classnames";
 import { useEffect, useMemo, useState } from "react";
 import {
   Mosaic,
+  MosaicWindow,
   createBalancedTreeFromLeaves,
   type LegacyMosaicNode,
   type MosaicNode,
+  type MosaicPath,
+  type MosaicWindowProps,
 } from "react-mosaic-component";
 
-import { EditorPane } from "./components/EditorPane";
 import {
   buildInitialFiles,
   compareEditors,
@@ -14,296 +27,495 @@ import {
   type FileId,
 } from "./lib/editorLayout";
 
-type ShellPaneId = "sidebar" | "workspace";
-type SidebarPaneId = "editors" | "packages";
+type WrapperEditorId = "output" | "editors" | "sidebar";
+type SidebarPaneId = "fileTree" | "packageManager";
 
-const initiallyVisible: FileId[] = ["renderer.js", "index.html", "preload.js", "styles.css"];
-
-const initialShellLayout: LegacyMosaicNode<ShellPaneId> = {
-  direction: "row",
-  first: "sidebar",
-  second: "workspace",
-  splitPercentage: 18,
+type PackageRecord = {
+  name: string;
+  versions: string[];
 };
 
-const initialSidebarLayout: LegacyMosaicNode<SidebarPaneId> = {
+const INITIAL_VISIBLE_EDITORS: FileId[] = ["renderer.js", "index.html", "preload.js", "styles.css"];
+const WRAPPER_LAYOUT_WITH_CONSOLE: LegacyMosaicNode<WrapperEditorId> = {
   direction: "column",
-  first: "editors",
-  second: "packages",
-  splitPercentage: 56,
+  first: "output",
+  second: {
+    direction: "row",
+    first: "sidebar",
+    second: "editors",
+    splitPercentage: 15,
+  },
+  splitPercentage: 25,
 };
-
-const packageVersions = {
-  react: ["19.1.0", "19.0.0", "18.3.1"],
-  electron: ["35.0.0", "34.3.0", "33.2.1"],
-  vite: ["8.0.1", "7.1.7", "6.4.5"],
+const WRAPPER_LAYOUT_WITHOUT_CONSOLE: LegacyMosaicNode<WrapperEditorId> = {
+  direction: "column",
+  first: "output",
+  second: {
+    direction: "row",
+    first: "sidebar",
+    second: "editors",
+    splitPercentage: 15,
+  },
+  splitPercentage: 0,
 };
+const SIDEBAR_LAYOUT: LegacyMosaicNode<SidebarPaneId> = {
+  direction: "column",
+  first: "fileTree",
+  second: "packageManager",
+  splitPercentage: 50,
+};
+const AVAILABLE_VERSIONS = ["0.81.2", "0.81.1", "0.81.0", "0.80.0-rc.4"];
+const INITIAL_PACKAGES: PackageRecord[] = [
+  { name: "react", versions: ["19.1.0", "19.0.0", "18.3.1"] },
+  { name: "react-native", versions: ["0.81.6", "0.81.2", "0.80.0"] },
+  { name: "expo", versions: ["54.0.33", "54.0.20", "53.0.21"] },
+];
+const CONSOLE_OUTPUT = [
+  "[10:24:18 AM] Starting React Native Fiddle...",
+  "[10:24:18 AM] Using template react-native-fiddle-repro-0.81.2",
+  "[10:24:19 AM] Ready. Press Run to launch the sample app.",
+].join("\n");
 
 function buildEditorTree(fileIds: FileId[]) {
-  return createBalancedTreeFromLeaves(fileIds, "row") as MosaicNode<FileId> | null;
+  if (fileIds.length === 0) return null;
+  return createBalancedTreeFromLeaves(
+    [...fileIds].sort(compareEditors),
+    "row",
+  ) as MosaicNode<FileId>;
+}
+
+function getEditorTitle(id: FileId) {
+  switch (id) {
+    case "main.js":
+      return "Main Process";
+    case "renderer.js":
+      return "Renderer Process";
+    case "index.html":
+      return "HTML";
+    case "preload.js":
+      return "Preload Script";
+    case "styles.css":
+      return "CSS";
+    case "package.json":
+      return "package.json";
+  }
 }
 
 function App() {
   const [files, setFiles] = useState<EditorFile[]>(() => buildInitialFiles());
-  const [visibleIds, setVisibleIds] = useState<FileId[]>(initiallyVisible);
-  const [activeId, setActiveId] = useState<FileId>("renderer.js");
-  const [maximizedId, setMaximizedId] = useState<FileId | null>(null);
-  const [shellLayout, setShellLayout] = useState(initialShellLayout);
-  const [sidebarLayout, setSidebarLayout] = useState(initialSidebarLayout);
+  const [visibleEditors, setVisibleEditors] = useState<FileId[]>(INITIAL_VISIBLE_EDITORS);
+  const [focusedEditor, setFocusedEditor] = useState<FileId>("renderer.js");
+  const [maximizedEditor, setMaximizedEditor] = useState<FileId | null>(null);
   const [editorLayout, setEditorLayout] = useState<MosaicNode<FileId> | null>(() =>
-    buildEditorTree(initiallyVisible),
+    buildEditorTree(INITIAL_VISIBLE_EDITORS),
   );
+  const [version, setVersion] = useState(AVAILABLE_VERSIONS[0]);
+  const [gistUrl, setGistUrl] = useState("");
+  const [moduleQuery, setModuleQuery] = useState("");
+  const [packages, setPackages] = useState(INITIAL_PACKAGES);
+  const [isConsoleShowing, setIsConsoleShowing] = useState(true);
 
   const fileMap = useMemo(() => new Map(files.map((file) => [file.id, file] as const)), [files]);
-  const sortedVisibleIds = useMemo(() => [...visibleIds].sort(compareEditors), [visibleIds]);
+  const filteredPackageNames = useMemo(() => {
+    const query = moduleQuery.trim().toLowerCase();
+    if (!query) return [];
+
+    return [
+      "@react-native/assets-registry",
+      "@react-navigation/native",
+      "react-native-safe-area-context",
+    ]
+      .filter((name) => name.toLowerCase().includes(query))
+      .slice(0, 5);
+  }, [moduleQuery]);
+
   useEffect(() => {
-    if (maximizedId) {
-      return;
+    document.body.classList.add("fiddle");
+    return () => {
+      document.body.classList.remove("fiddle");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (maximizedEditor) return;
+    setEditorLayout(buildEditorTree(visibleEditors));
+  }, [maximizedEditor, visibleEditors]);
+
+  const hideEditor = (id: FileId) => {
+    if (visibleEditors.length <= 1) return;
+
+    const nextVisible = visibleEditors.filter((fileId) => fileId !== id);
+    setVisibleEditors(nextVisible);
+
+    if (focusedEditor === id && nextVisible[0]) {
+      setFocusedEditor(nextVisible[0]);
     }
 
-    setEditorLayout(buildEditorTree(sortedVisibleIds));
-  }, [maximizedId, sortedVisibleIds]);
-
-  const handleChange = (id: FileId, value: string) => {
-    setFiles((current) => current.map((file) => (file.id === id ? { ...file, value } : file)));
+    if (maximizedEditor === id) {
+      setMaximizedEditor(null);
+    }
   };
 
-  const toggleVisibility = (id: FileId) => {
-    setVisibleIds((current) => {
+  const toggleEditorVisibility = (id: FileId) => {
+    setVisibleEditors((current) => {
       if (current.includes(id)) {
-        const next = current.filter((fileId) => fileId !== id);
-
-        if (maximizedId === id) {
-          setMaximizedId(null);
-        }
-
-        if (activeId === id && next.length > 0) {
-          setActiveId(next[0]);
-        }
-
-        return next;
+        if (current.length === 1) return current;
+        return current.filter((fileId) => fileId !== id);
       }
 
       return [...current, id].sort(compareEditors);
     });
   };
 
-  const hidePane = (id: FileId) => {
-    if (visibleIds.length <= 1) {
-      return;
-    }
-
-    toggleVisibility(id);
+  const resetEditorLayout = () => {
+    const nextVisible = files
+      .map((file) => file.id)
+      .filter((id): id is FileId => id !== "package.json");
+    setVisibleEditors(nextVisible);
+    setFocusedEditor("main.js");
+    setMaximizedEditor(null);
   };
 
-  const renderEditorTile = (id: FileId) => {
-    const file = fileMap.get(id);
-    if (!file) {
-      return <div />;
-    }
-
-    return (
-      <EditorPane
-        file={file}
-        isActive={activeId === file.id}
-        onChange={handleChange}
-        onFocus={setActiveId}
-        onHide={hidePane}
-        onMaximize={setMaximizedId}
-        onRestore={() => setMaximizedId(null)}
-        isMaximized={maximizedId === file.id}
-      />
+  const updateFileValue = (id: FileId, value: string | undefined) => {
+    setFiles((current) =>
+      current.map((file) =>
+        file.id === id && typeof value === "string" ? { ...file, value } : file,
+      ),
     );
   };
 
-  const editorsPanel = (
-    <section className="h-full overflow-hidden rounded-[8px] border border-[var(--border-color-1)] bg-[rgba(251,251,251,0.92)] shadow-[var(--editor-shadow)]">
-      <div className="h-full overflow-auto px-3 py-3">
-        <div className="mb-2 grid min-h-10 grid-cols-[12px_18px_minmax(0,1fr)_auto] items-center gap-2 rounded-[6px] border border-[#e1e7ea] bg-[linear-gradient(180deg,#f8fbfc,#eef4f7)] px-2">
-          <span className="h-3 w-3" />
-          <span className="bp3-tree-node-icon bp3-tree-node-icon--folder" aria-hidden="true" />
-          <span className="truncate text-[13px] font-semibold text-[var(--text-color-2)]">
-            Editors
-          </span>
-          <span className="flex items-center gap-1">
-            <button type="button" className="bp3-button bp3-small" aria-label="Add editor">
-              <span className="button-icon button-icon--add" aria-hidden="true" />
-            </button>
-            <button type="button" className="bp3-button bp3-small" aria-label="Grid layout">
-              <span className="button-icon button-icon--grid" aria-hidden="true" />
-            </button>
-          </span>
-        </div>
+  const setPackageVersion = (name: string, nextVersion: string) => {
+    setPackages((current) =>
+      current.map((entry) =>
+        entry.name === name
+          ? {
+              ...entry,
+              versions: [
+                nextVersion,
+                ...entry.versions.filter((versionItem) => versionItem !== nextVersion),
+              ],
+            }
+          : entry,
+      ),
+    );
+  };
 
-        <ul className="m-0 list-none p-0">
-          {files.map((file) => {
-            const isVisible = visibleIds.includes(file.id);
-            const isActive = activeId === file.id;
+  const removePackage = (name: string) => {
+    setPackages((current) => current.filter((entry) => entry.name !== name));
+  };
 
-            return (
-              <li key={file.id} className="m-0">
-                <div
-                  className={[
-                    "grid min-h-[34px] grid-cols-[12px_18px_minmax(0,1fr)_auto] items-center gap-2 rounded-[6px] px-2",
-                    isActive ? "bg-[linear-gradient(180deg,#deedf9,#d1e5f4)]" : "",
-                  ].join(" ")}
-                >
-                  <span className="h-3 w-3" />
-                  <span
-                    className="bp3-tree-node-icon bp3-tree-node-icon--document"
-                    aria-hidden="true"
-                  />
-                  <button
-                    type="button"
-                    className="truncate border-0 bg-transparent p-0 text-left text-[13px] text-[var(--text-color-2)] hover:text-[#0b216f]"
-                    onClick={() => {
-                      if (!isVisible) {
-                        toggleVisibility(file.id);
-                      }
-                      setActiveId(file.id);
-                      setMaximizedId(null);
-                    }}
-                  >
-                    {file.id}
-                  </button>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      className="bp3-button bp3-minimal"
-                      onClick={() => toggleVisibility(file.id)}
-                      aria-label={isVisible ? "Hide file" : "Show file"}
-                    >
-                      <span
-                        className={`button-icon ${isVisible ? "button-icon--eye-open" : "button-icon--eye-off"}`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
-  );
+  const addPackage = (name: string) => {
+    if (!name || packages.some((entry) => entry.name === name)) return;
 
-  const packagesPanel = (
-    <section className="h-full overflow-hidden rounded-[8px] border border-[var(--border-color-1)] bg-[rgba(251,251,251,0.92)] shadow-[var(--editor-shadow)]">
-      <div className="flex h-full flex-col gap-2 overflow-auto px-3 py-3">
-        <h5 className="m-0 text-[13px] leading-[1.3] font-semibold text-[var(--text-color-2)]">
-          Modules
-        </h5>
-        <div>
-          <input
-            type="text"
-            autoComplete="off"
-            placeholder="Search..."
-            className="h-8 w-full rounded-[6px] border border-[#cfd9de] bg-white px-[11px] text-[13px] text-[var(--text-color-1)] outline-none placeholder:text-[#83949c]"
-          />
-        </div>
+    setPackages((current) => [{ name, versions: ["1.0.0"] }, ...current]);
+    setModuleQuery("");
+  };
 
-        <ul className="m-0 list-none p-0">
-          {Object.entries(packageVersions).map(([pkg, versions]) => (
-            <li key={pkg} className="m-0">
-              <div className="grid min-h-[34px] grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-2 rounded-[6px] px-2">
-                <span className="h-3 w-3" />
-                <span className="truncate text-[13px] text-[var(--text-color-2)]">{pkg}</span>
-                <span className="flex items-center gap-[6px]">
-                  <select
-                    className="h-7 max-w-32 rounded-[5px] border border-[#cfd9de] bg-white px-2 text-[12px] text-[var(--text-color-2)]"
-                    name={pkg}
-                    defaultValue={versions[0]}
-                  >
-                    {versions.map((version) => (
-                      <option key={version}>{version}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className="bp3-button bp3-minimal"
-                    aria-label={`Remove ${pkg}`}
-                  >
-                    <span className="button-icon button-icon--remove" aria-hidden="true" />
-                  </button>
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
+  const fileTreeNodes: TreeNodeInfo[] = [
+    {
+      childNodes: files.map((file, index) => {
+        const isVisible = visibleEditors.includes(file.id);
 
-  const workspacePanel = maximizedId ? (
-    <div className="h-full">{renderEditorTile(maximizedId)}</div>
-  ) : editorLayout ? (
-    <Mosaic<FileId>
-      className="h-full w-full"
-      blueprintNamespace="bp3"
-      resize={{ minimumPaneSizePercentage: 18 }}
-      value={editorLayout}
-      onChange={(newNode) => setEditorLayout(newNode)}
-      onRelease={(newNode) => setEditorLayout(newNode)}
-      renderTile={(id) => renderEditorTile(id)}
-      zeroStateView={<div />}
-      mosaicId="editor-workspace"
-    />
-  ) : (
-    <div className="grid h-full place-items-center rounded-[8px] border border-[var(--border-color-1)] bg-[rgba(251,251,251,0.92)] text-center text-[var(--foreground-3)] shadow-[var(--editor-shadow)]">
+        return {
+          id: index,
+          hasCaret: false,
+          icon: "document",
+          isSelected: focusedEditor === file.id,
+          label: (
+            <span
+              className="pointer"
+              onClick={() => {
+                if (!isVisible) toggleEditorVisibility(file.id);
+                setFocusedEditor(file.id);
+                setMaximizedEditor(null);
+              }}
+            >
+              {file.id}
+            </span>
+          ),
+          secondaryLabel: (
+            <ButtonGroup>
+              <Button
+                minimal
+                icon={isVisible ? "eye-open" : "eye-off"}
+                onClick={() => toggleEditorVisibility(file.id)}
+              />
+            </ButtonGroup>
+          ),
+        } satisfies TreeNodeInfo;
+      }),
+      hasCaret: false,
+      icon: "folder-open",
+      id: "files",
+      isExpanded: true,
+      label: "Editors",
+      secondaryLabel: (
+        <ButtonGroup minimal style={{ display: "flex", gap: 4 }}>
+          <Button small icon="add" />
+          <Button small icon="grid-view" onClick={resetEditorLayout} />
+        </ButtonGroup>
+      ),
+    },
+  ];
+
+  const moduleNodes: TreeNodeInfo[] = packages.map((entry) => ({
+    id: entry.name,
+    label: entry.name,
+    secondaryLabel: (
       <div>
-        <h4 className="m-0 text-[13px] leading-[1.3] font-semibold">No visible editors</h4>
-        <p className="mt-1 text-[13px]">Use the left tree to reopen a file.</p>
+        <select
+          className="package-tree-version-select"
+          name={entry.name}
+          onChange={(event) => setPackageVersion(entry.name, event.target.value)}
+          value={entry.versions[0]}
+        >
+          {entry.versions.map((versionOption) => (
+            <option key={versionOption}>{versionOption}</option>
+          ))}
+        </select>
+        <Button minimal icon="remove" onClick={() => removePackage(entry.name)} />
+      </div>
+    ),
+  }));
+
+  const renderEditorToolbar = ({ title }: MosaicWindowProps<FileId>, id: FileId) => (
+    <div role="toolbar">
+      <div>
+        <h5>{title}</h5>
+      </div>
+      <div />
+      <div className="mosaic-controls">
+        <Button className="bp3-small" icon="maximize" onClick={() => setMaximizedEditor(id)} />
+        <Button className="bp3-small" icon="cross" onClick={() => hideEditor(id)} />
       </div>
     </div>
   );
 
-  return (
-    <div className="bg-white/30shadow-[0_22px_44px_rgba(37,110,128,0.08)] h-full overflow-hidden border border-white/60">
-      <Mosaic<ShellPaneId>
-        className="h-full w-full"
-        blueprintNamespace="bp3"
-        resize={{ minimumPaneSizePercentage: 12 }}
-        value={shellLayout}
-        onChange={(newNode) => {
-          if (newNode) {
-            setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
-          }
-        }}
-        onRelease={(newNode) => {
-          if (newNode) {
-            setShellLayout(newNode as LegacyMosaicNode<ShellPaneId>);
-          }
-        }}
-        renderTile={(id) => {
-          if (id === "sidebar") {
-            return (
-              <Mosaic<SidebarPaneId>
-                className="h-full w-full"
-                blueprintNamespace="bp3"
-                resize={{ minimumPaneSizePercentage: 24 }}
-                value={sidebarLayout}
-                onChange={(newNode) => {
-                  if (newNode) {
-                    setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
-                  }
-                }}
-                onRelease={(newNode) => {
-                  if (newNode) {
-                    setSidebarLayout(newNode as LegacyMosaicNode<SidebarPaneId>);
-                  }
-                }}
-                renderTile={(sidebarId) => (sidebarId === "editors" ? editorsPanel : packagesPanel)}
-                zeroStateView={<div />}
-                mosaicId="sidebar-panels"
-              />
-            );
-          }
+  const renderEditorTile = (id: FileId, path: MosaicPath) => {
+    const file = fileMap.get(id);
+    if (!file) return <div />;
 
-          return <div className="h-full">{workspacePanel}</div>;
+    return (
+      <MosaicWindow<FileId>
+        className={id}
+        path={path}
+        renderToolbar={(props) => renderEditorToolbar(props, id)}
+        title={getEditorTitle(id)}
+      >
+        <div className="editorContainer">
+          <Editor
+            beforeMount={(monaco) => {
+              monaco.editor.defineTheme("main", {
+                base: "vs",
+                inherit: true,
+                rules: [],
+                colors: {
+                  "editor.background": "#fbfbfb",
+                },
+              });
+            }}
+            className="editor"
+            defaultLanguage={file.language}
+            language={file.language}
+            onChange={(value) => updateFileValue(id, value)}
+            onMount={(editor) => {
+              if (focusedEditor === id) editor.focus();
+            }}
+            options={{
+              automaticLayout: true,
+              minimap: { enabled: false },
+              wordWrap: "on",
+              fontSize: 12,
+              readOnly: file.readOnly,
+              theme: "main",
+            }}
+            path={id}
+            value={file.value}
+          />
+        </div>
+      </MosaicWindow>
+    );
+  };
+
+  const editorsPane = maximizedEditor ? (
+    <div className="mosaic">{renderEditorTile(maximizedEditor, [])}</div>
+  ) : (
+    <Mosaic<FileId>
+      blueprintNamespace="bp3"
+      className={`focused__${focusedEditor}`}
+      onChange={setEditorLayout}
+      renderTile={renderEditorTile}
+      resize={{ minimumPaneSizePercentage: 15 }}
+      value={editorLayout}
+      zeroStateView={
+        <NonIdealState
+          action={<Button onClick={resetEditorLayout} text="Reset editors" />}
+          description="You have closed all editors. You can open them again with the button below or in the sidebar menu!"
+          icon="applications"
+        />
+      }
+    />
+  );
+
+  const outputPane = (
+    <div className="output" style={{ display: isConsoleShowing ? "inline-block" : "none" }}>
+      <Editor
+        beforeMount={(monaco) => {
+          monaco.editor.defineTheme("output-theme", {
+            base: "vs",
+            inherit: true,
+            rules: [{ token: "custom-date", foreground: "5f6b7c" }],
+            colors: {
+              "editor.background": "#d6dde0",
+              "editorLineNumber.foreground": "#5f6b7c",
+            },
+          });
+          monaco.languages.register({ id: "consoleOutputLanguage" });
+          monaco.languages.setMonarchTokensProvider("consoleOutputLanguage", {
+            tokenizer: {
+              root: [[/\[[^\]]+\]/, "custom-date"]],
+            },
+          });
         }}
-        zeroStateView={<div />}
-        mosaicId="fiddle-shell"
+        defaultLanguage="consoleOutputLanguage"
+        language="consoleOutputLanguage"
+        options={{
+          automaticLayout: true,
+          contextmenu: false,
+          fontSize: 12,
+          lineNumbersMinChars: 10,
+          minimap: { enabled: false },
+          readOnly: true,
+          wordWrap: "on",
+          theme: "output-theme",
+        }}
+        value={CONSOLE_OUTPUT}
+      />
+    </div>
+  );
+
+  const sidebarPane = (
+    <Mosaic<SidebarPaneId>
+      blueprintNamespace="bp3"
+      initialValue={SIDEBAR_LAYOUT}
+      renderTile={(id) => {
+        if (id === "fileTree") {
+          return (
+            <div className="fiddle-scrollbar">
+              <Tree contents={fileTreeNodes} />
+            </div>
+          );
+        }
+
+        return (
+          <div className="package-tree fiddle-scrollbar">
+            <h5>Modules</h5>
+            <InputGroup
+              leftIcon="search"
+              onChange={(event) => setModuleQuery(event.target.value)}
+              placeholder="Search for modules here..."
+              value={moduleQuery}
+            />
+            {filteredPackageNames.length > 0 ? (
+              <div className="bp3-menu">
+                {filteredPackageNames.map((name) => (
+                  <button
+                    key={name}
+                    className="bp3-menu-item"
+                    onClick={() => addPackage(name)}
+                    type="button"
+                  >
+                    <span className="bp3-fill package-manager-result">{name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <Tree contents={moduleNodes} />
+          </div>
+        );
+      }}
+    />
+  );
+
+  return (
+    <div className="container">
+      <header id="header">
+        <div className={classNames("commands", "is-mac")}>
+          <div>
+            <ControlGroup fill={true} vertical={false}>
+              <Button icon="cog" title="Setting" />
+            </ControlGroup>
+            <ControlGroup fill={true} vertical={false}>
+              <Button
+                id="version-chooser"
+                icon="saved"
+                onClick={() =>
+                  setVersion(
+                    (current) =>
+                      AVAILABLE_VERSIONS[
+                        (AVAILABLE_VERSIONS.indexOf(current) + 1) % AVAILABLE_VERSIONS.length
+                      ],
+                  )
+                }
+                text={version}
+              />
+              <Button icon="play" id="button-run" text="Run" />
+            </ControlGroup>
+            <ControlGroup fill={true} vertical={false}>
+              <Button
+                active={isConsoleShowing}
+                icon="console"
+                onClick={() => setIsConsoleShowing((current) => !current)}
+                text="Console"
+              />
+            </ControlGroup>
+          </div>
+          <div className="title">rnd-fiddle</div>
+          <div>
+            <form
+              aria-label="Enter Fiddle Gist URL"
+              className={classNames("address-bar", { empty: !gistUrl })}
+              onSubmit={(event) => event.preventDefault()}
+            >
+              <fieldset>
+                <InputGroup
+                  intent={
+                    !gistUrl || /^https:\/\/gist\.github\.com\/.+$/.test(gistUrl)
+                      ? undefined
+                      : "danger"
+                  }
+                  leftIcon="geosearch"
+                  onChange={(event) => setGistUrl(event.target.value)}
+                  placeholder="https://gist.github.com/..."
+                  rightElement={
+                    <Button
+                      disabled={!/^https:\/\/gist\.github\.com\/.+$/.test(gistUrl)}
+                      icon="cloud-download"
+                      text="Load Fiddle"
+                    />
+                  }
+                  value={gistUrl}
+                />
+              </fieldset>
+            </form>
+            <ButtonGroup>
+              <Button icon="share" text="Publish" />
+            </ButtonGroup>
+          </div>
+        </div>
+      </header>
+      <Mosaic<WrapperEditorId>
+        blueprintNamespace="bp3"
+        initialValue={
+          isConsoleShowing ? WRAPPER_LAYOUT_WITH_CONSOLE : WRAPPER_LAYOUT_WITHOUT_CONSOLE
+        }
+        key={isConsoleShowing ? "console-visible" : "console-hidden"}
+        renderTile={(id) => {
+          if (id === "output") return outputPane;
+          if (id === "sidebar") return sidebarPane;
+          return editorsPane;
+        }}
+        resize={{ minimumPaneSizePercentage: 15 }}
       />
     </div>
   );
