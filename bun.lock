@@ -29,7 +29,7 @@
       "name": "fiddle-web",
       "version": "0.0.0",
       "dependencies": {
-        "@blueprintjs/core": "^3.36.0",
+        "@blueprintjs/core": "^3.54.0",
         "@blueprintjs/icons": "^3.23.0",
         "@blueprintjs/popover2": "^0.12.2",
         "@blueprintjs/select": "^3.15.0",
@@ -58,6 +58,9 @@
         "vite": "^8.0.1",
       },
     },
+  },
+  "patchedDependencies": {
+    "@blueprintjs/core@3.54.0": "patches-bun/@blueprintjs%2Fcore@3.54.0.patch",
   },
   "catalog": {
     "@typescript/native-preview": "^7.0.0-dev.20260319.1",

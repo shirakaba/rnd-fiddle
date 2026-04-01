@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@blueprintjs/core": "^3.36.0",
+    "@blueprintjs/core": "^3.54.0",
     "@blueprintjs/icons": "^3.23.0",
     "@blueprintjs/popover2": "^0.12.2",
     "@blueprintjs/select": "^3.15.0",

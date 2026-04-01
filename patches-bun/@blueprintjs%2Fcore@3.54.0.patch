@@ -1,0 +1,84 @@
+diff --git a/lib/css/blueprint.css b/lib/css/blueprint.css
+index 882742a62ef848d1d203d47eec8b9fbcb7645afa..e0c98b527e2ff1815e747fc716053ef82d5a4589 100644
+--- a/lib/css/blueprint.css
++++ b/lib/css/blueprint.css
+@@ -2804,9 +2804,9 @@ a.bp3-button{
+         color:rgba(92, 112, 128, 0.6);
+         cursor:not-allowed;
+         outline:none; }
+-        .bp3-file-input input:disabled + .bp3-file-upload-input::after.bp3-active, .bp3-file-input input:disabled + .bp3-file-upload-input::after.bp3-active:hover,
+-        .bp3-file-input input.bp3-disabled + .bp3-file-upload-input::after.bp3-active,
+-        .bp3-file-input input.bp3-disabled + .bp3-file-upload-input::after.bp3-active:hover{
++        .bp3-file-input input:disabled + .bp3-file-upload-input.bp3-active::after, .bp3-file-input input:disabled + .bp3-file-upload-input.bp3-active::after:hover,
++        .bp3-file-input input.bp3-disabled + .bp3-file-upload-input.bp3-active::after,
++        .bp3-file-input input.bp3-disabled + .bp3-file-upload-input.bp3-active::after:hover{
+           background:rgba(206, 217, 224, 0.7); }
+       .bp3-dark .bp3-file-input input:disabled + .bp3-file-upload-input, .bp3-dark
+       .bp3-file-input input.bp3-disabled + .bp3-file-upload-input{
+@@ -2821,8 +2821,8 @@ a.bp3-button{
+           -webkit-box-shadow:none;
+                   box-shadow:none;
+           color:rgba(167, 182, 194, 0.6); }
+-          .bp3-dark .bp3-file-input input:disabled + .bp3-file-upload-input::after.bp3-active, .bp3-dark
+-          .bp3-file-input input.bp3-disabled + .bp3-file-upload-input::after.bp3-active{
++          .bp3-dark .bp3-file-input input:disabled + .bp3-file-upload-input.bp3-active::after, .bp3-dark
++          .bp3-file-input input.bp3-disabled + .bp3-file-upload-input.bp3-active::after{
+             background:rgba(57, 75, 89, 0.7); }
+   .bp3-file-input.bp3-file-input-has-selection .bp3-file-upload-input{
+     color:#182026; }
+@@ -2931,12 +2931,12 @@ a.bp3-button{
+       background-color:#ebf1f5;
+       -webkit-box-shadow:inset 0 0 0 1px rgba(16, 22, 26, 0.2), inset 0 -1px 0 rgba(16, 22, 26, 0.1);
+               box-shadow:inset 0 0 0 1px rgba(16, 22, 26, 0.2), inset 0 -1px 0 rgba(16, 22, 26, 0.1); }
+-    .bp3-file-upload-input::after:active, .bp3-file-upload-input::after.bp3-active{
++    .bp3-file-upload-input::after:active, .bp3-file-upload-input.bp3-active::after{
+       background-color:#d8e1e8;
+       background-image:none;
+       -webkit-box-shadow:inset 0 0 0 1px rgba(16, 22, 26, 0.2), inset 0 1px 2px rgba(16, 22, 26, 0.2);
+               box-shadow:inset 0 0 0 1px rgba(16, 22, 26, 0.2), inset 0 1px 2px rgba(16, 22, 26, 0.2); }
+-    .bp3-file-upload-input::after:disabled, .bp3-file-upload-input::after.bp3-disabled{
++    .bp3-file-upload-input.bp3-disabled::after{
+       background-color:rgba(206, 217, 224, 0.5);
+       background-image:none;
+       -webkit-box-shadow:none;
+@@ -2944,7 +2944,7 @@ a.bp3-button{
+       color:rgba(92, 112, 128, 0.6);
+       cursor:not-allowed;
+       outline:none; }
+-      .bp3-file-upload-input::after:disabled.bp3-active, .bp3-file-upload-input::after:disabled.bp3-active:hover, .bp3-file-upload-input::after.bp3-disabled.bp3-active, .bp3-file-upload-input::after.bp3-disabled.bp3-active:hover{
++      .bp3-file-upload-input.bp3-disabled.bp3-active::after, .bp3-file-upload-input.bp3-disabled.bp3-active::after:hover{
+         background:rgba(206, 217, 224, 0.7); }
+   .bp3-file-upload-input:hover::after{
+     background-clip:padding-box;
+@@ -3003,26 +3003,26 @@ a.bp3-button{
+       -webkit-box-shadow:0 0 0 1px rgba(16, 22, 26, 0.4);
+               box-shadow:0 0 0 1px rgba(16, 22, 26, 0.4);
+       color:#f5f8fa; }
+-      .bp3-dark .bp3-file-upload-input::after:hover, .bp3-dark .bp3-file-upload-input::after:active, .bp3-dark .bp3-file-upload-input::after.bp3-active{
++      .bp3-dark .bp3-file-upload-input::after:hover, .bp3-dark .bp3-file-upload-input::after:active, .bp3-dark .bp3-file-upload-input.bp3-active::after{
+         color:#f5f8fa; }
+       .bp3-dark .bp3-file-upload-input::after:hover{
+         background-color:#30404d;
+         -webkit-box-shadow:0 0 0 1px rgba(16, 22, 26, 0.4);
+                 box-shadow:0 0 0 1px rgba(16, 22, 26, 0.4); }
+-      .bp3-dark .bp3-file-upload-input::after:active, .bp3-dark .bp3-file-upload-input::after.bp3-active{
++      .bp3-dark .bp3-file-upload-input::after:active, .bp3-dark .bp3-file-upload-input.bp3-active::after{
+         background-color:#202b33;
+         background-image:none;
+         -webkit-box-shadow:0 0 0 1px rgba(16, 22, 26, 0.6), inset 0 1px 2px rgba(16, 22, 26, 0.2);
+                 box-shadow:0 0 0 1px rgba(16, 22, 26, 0.6), inset 0 1px 2px rgba(16, 22, 26, 0.2); }
+-      .bp3-dark .bp3-file-upload-input::after:disabled, .bp3-dark .bp3-file-upload-input::after.bp3-disabled{
++      .bp3-dark .bp3-file-upload-input.bp3-disabled::after{
+         background-color:rgba(57, 75, 89, 0.5);
+         background-image:none;
+         -webkit-box-shadow:none;
+                 box-shadow:none;
+         color:rgba(167, 182, 194, 0.6); }
+-        .bp3-dark .bp3-file-upload-input::after:disabled.bp3-active, .bp3-dark .bp3-file-upload-input::after.bp3-disabled.bp3-active{
++        .bp3-dark .bp3-file-upload-input.bp3-disabled.bp3-active::after{
+           background:rgba(57, 75, 89, 0.7); }
+-      .bp3-dark .bp3-file-upload-input::after .bp3-button-spinner .bp3-spinner-head{
++      .bp3-dark .bp3-file-upload-input .bp3-button-spinner .bp3-spinner-head{
+         background:rgba(16, 22, 26, 0.5);
+         stroke:#8a9ba8; }
+     .bp3-dark .bp3-file-upload-input:hover::after{

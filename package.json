@@ -45,5 +45,8 @@
     "react": "19.1.4",
     "react-dom": "^19.0.0",
     "@typescript/native-preview": "^7.0.0-dev.20260319.1"
+  },
+  "patchedDependencies": {
+    "@blueprintjs/core@3.54.0": "patches-bun/@blueprintjs%2Fcore@3.54.0.patch"
   }
 }
