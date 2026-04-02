@@ -217,12 +217,12 @@ function App() {
         inherit: true,
         rules: [{ token: "custom-date", foreground: isDarkTheme ? "8ac7d6" : "5f6b7c" }],
         colors: {
-          "editor.background": isDarkTheme ? "#1d2427" : "#d6dde0",
+          "editor.background": isDarkTheme ? "#2f3241" : "#d6dde0",
           "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
           "editorLineNumber.foreground": isDarkTheme ? "#8ac7d6" : "#5f6b7c",
           "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
-          "editor.lineHighlightBackground": isDarkTheme ? "#232b30" : "#dbe2e6",
-          "editor.lineHighlightBorder": isDarkTheme ? "#232b30" : "#eeeeee",
+          "editor.lineHighlightBackground": isDarkTheme ? "#3f4456" : "#dbe2e6",
+          "editor.lineHighlightBorder": isDarkTheme ? "#3f4456" : "#eeeeee",
           "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
         },
       });
