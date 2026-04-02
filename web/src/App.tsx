@@ -42,7 +42,7 @@ type PackageRecord = {
   versions: string[];
 };
 
-const INITIAL_VISIBLE_EDITORS: FileId[] = ["renderer.js", "index.html", "preload.js", "styles.css"];
+const INITIAL_VISIBLE_EDITORS: FileId[] = ["App.js"];
 const WRAPPER_LAYOUT_WITH_CONSOLE: LegacyMosaicNode<WrapperEditorId> = {
   direction: "column",
   first: "output",
@@ -109,16 +109,12 @@ function buildEditorTree(fileIds: FileId[]) {
 
 function getEditorTitle(id: FileId) {
   switch (id) {
-    case "main.js":
-      return "Main Process";
-    case "renderer.js":
-      return "Renderer Process";
-    case "index.html":
-      return "HTML";
-    case "preload.js":
-      return "Preload Script";
-    case "styles.css":
-      return "CSS";
+    case "App.js":
+      return "Root UI component (App.js)";
+    case "index.js":
+      return "Entrypoint (index.js)";
+    case "metro.config.js":
+      return "metro.config.js";
     case "package.json":
       return "package.json";
   }
@@ -126,7 +122,7 @@ function getEditorTitle(id: FileId) {
 
 function App() {
   const [files, setFiles] = useState<EditorFile[]>(() => buildInitialFiles());
-  const [focusedEditor, setFocusedEditor] = useState<FileId>("renderer.js");
+  const [focusedEditor, setFocusedEditor] = useState<FileId>("App.js");
   const [maximizedEditor, setMaximizedEditor] = useState<FileId | null>(null);
   const [editorLayout, setEditorLayout] = useState<MosaicNode<FileId> | null>(() =>
     buildEditorTree(INITIAL_VISIBLE_EDITORS),
@@ -297,7 +293,7 @@ function App() {
     }
 
     if (nextVisible.length === 0) {
-      setFocusedEditor("main.js");
+      setFocusedEditor("App.js");
     }
 
     if (maximizedEditor === id) {
@@ -314,7 +310,7 @@ function App() {
         : [...currentVisible, id].sort(compareEditors);
 
       if (!nextVisible.includes(focusedEditor)) {
-        setFocusedEditor(nextVisible[0] ?? "main.js");
+        setFocusedEditor(nextVisible[0] ?? "App.js");
       }
 
       if (maximizedEditor && !nextVisible.includes(maximizedEditor)) {
@@ -330,7 +326,7 @@ function App() {
       .map((file) => file.id)
       .filter((id): id is FileId => id !== "package.json");
     setEditorLayout(buildEditorTree(nextVisible));
-    setFocusedEditor("main.js");
+    setFocusedEditor("App.js");
     setMaximizedEditor(null);
   };
 
