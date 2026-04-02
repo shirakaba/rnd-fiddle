@@ -44,6 +44,15 @@ header {
 
 .address-bar .bp3-input {
   padding-right: 116px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &::placeholder {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .disabled-menu-tooltip.bp3-popover-target,
