@@ -11,12 +11,13 @@ import {
 } from "@blueprintjs/core";
 import Editor from "@monaco-editor/react";
 import classNames from "classnames";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Mosaic,
   MosaicWindow,
   convertLegacyToNary,
   createBalancedTreeFromLeaves,
+  getLeaves,
   isSplitNode,
   type LegacyMosaicNode,
   type MosaicNode,
@@ -130,7 +131,6 @@ function getEditorTitle(id: FileId) {
 
 function App() {
   const [files, setFiles] = useState<EditorFile[]>(() => buildInitialFiles());
-  const [visibleEditors, setVisibleEditors] = useState<FileId[]>(INITIAL_VISIBLE_EDITORS);
   const [focusedEditor, setFocusedEditor] = useState<FileId>("renderer.js");
   const [maximizedEditor, setMaximizedEditor] = useState<FileId | null>(null);
   const [editorLayout, setEditorLayout] = useState<MosaicNode<FileId> | null>(() =>
@@ -148,6 +148,8 @@ function App() {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  const configuredThemeModeRef = useRef<"light" | "dark" | null>(null);
+  const consoleLanguageRegisteredRef = useRef(false);
 
   const fileMap = useMemo(() => new Map(files.map((file) => [file.id, file] as const)), [files]);
   const editorOptions = useMemo(
@@ -162,6 +164,10 @@ function App() {
     }),
     [],
   );
+  const visibleEditors = useMemo(
+    () => (editorLayout ? (getLeaves(editorLayout) as FileId[]) : []),
+    [editorLayout],
+  );
   const filteredPackageNames = useMemo(() => {
     const query = moduleQuery.trim().toLowerCase();
     if (!query) return [];
@@ -174,6 +180,54 @@ function App() {
       .filter((name) => name.toLowerCase().includes(query))
       .slice(0, 5);
   }, [moduleQuery]);
+  const configureMonaco = useCallback(
+    (monaco: typeof Monaco) => {
+      if (!consoleLanguageRegisteredRef.current) {
+        monaco.languages.register({ id: "consoleOutputLanguage" });
+        monaco.languages.setMonarchTokensProvider("consoleOutputLanguage", {
+          tokenizer: {
+            root: [[/\[[^\]]+\]/, "custom-date"]],
+          },
+        });
+        consoleLanguageRegisteredRef.current = true;
+      }
+
+      const nextThemeMode = isDarkTheme ? "dark" : "light";
+      if (configuredThemeModeRef.current === nextThemeMode) return;
+
+      monaco.editor.defineTheme(MAIN_EDITOR_THEME, {
+        base: isDarkTheme ? "vs-dark" : "vs",
+        inherit: true,
+        rules: [{ token: "custom-date", foreground: "008800" }],
+        colors: {
+          "editor.background": isDarkTheme ? "#2f3241" : "#fbfbfb",
+          "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
+          "editorLineNumber.foreground": isDarkTheme ? "#8a9ba8" : "#5f6b7c",
+          "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
+          "editor.lineHighlightBorder": isDarkTheme ? "#3f4456" : "#d8dae2",
+          "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
+        },
+      });
+
+      monaco.editor.defineTheme(OUTPUT_EDITOR_THEME, {
+        base: isDarkTheme ? "vs-dark" : "vs",
+        inherit: true,
+        rules: [{ token: "custom-date", foreground: isDarkTheme ? "8ac7d6" : "5f6b7c" }],
+        colors: {
+          "editor.background": isDarkTheme ? "#1d2427" : "#d6dde0",
+          "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
+          "editorLineNumber.foreground": isDarkTheme ? "#8ac7d6" : "#5f6b7c",
+          "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
+          "editor.lineHighlightBackground": isDarkTheme ? "#232b30" : "#dbe2e6",
+          "editor.lineHighlightBorder": isDarkTheme ? "#232b30" : "#eeeeee",
+          "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
+        },
+      });
+
+      configuredThemeModeRef.current = nextThemeMode;
+    },
+    [isDarkTheme],
+  );
 
   useEffect(() => {
     document.body.classList.add("fiddle");
@@ -199,11 +253,6 @@ function App() {
   useEffect(() => {
     document.body.classList.toggle("bp3-dark", isDarkTheme);
   }, [isDarkTheme]);
-
-  useEffect(() => {
-    if (maximizedEditor) return;
-    setEditorLayout(buildEditorTree(visibleEditors));
-  }, [maximizedEditor, visibleEditors]);
 
   useEffect(() => {
     setWrapperLayout((current) => {
@@ -233,13 +282,15 @@ function App() {
   }, [isConsoleShowing]);
 
   const hideEditor = (id: FileId) => {
-    if (visibleEditors.length <= 1) return;
-
     const nextVisible = visibleEditors.filter((fileId) => fileId !== id);
-    setVisibleEditors(nextVisible);
+    setEditorLayout(buildEditorTree(nextVisible));
 
     if (focusedEditor === id && nextVisible[0]) {
       setFocusedEditor(nextVisible[0]);
+    }
+
+    if (nextVisible.length === 0) {
+      setFocusedEditor("main.js");
     }
 
     if (maximizedEditor === id) {
@@ -248,13 +299,22 @@ function App() {
   };
 
   const toggleEditorVisibility = (id: FileId) => {
-    setVisibleEditors((current) => {
-      if (current.includes(id)) {
-        if (current.length === 1) return current;
-        return current.filter((fileId) => fileId !== id);
+    setEditorLayout((current) => {
+      const currentVisible = current ? (getLeaves(current) as FileId[]) : [];
+
+      const nextVisible = currentVisible.includes(id)
+        ? currentVisible.filter((fileId) => fileId !== id)
+        : [...currentVisible, id].sort(compareEditors);
+
+      if (!nextVisible.includes(focusedEditor)) {
+        setFocusedEditor(nextVisible[0] ?? "main.js");
       }
 
-      return [...current, id].sort(compareEditors);
+      if (maximizedEditor && !nextVisible.includes(maximizedEditor)) {
+        setMaximizedEditor(null);
+      }
+
+      return buildEditorTree(nextVisible);
     });
   };
 
@@ -262,7 +322,7 @@ function App() {
     const nextVisible = files
       .map((file) => file.id)
       .filter((id): id is FileId => id !== "package.json");
-    setVisibleEditors(nextVisible);
+    setEditorLayout(buildEditorTree(nextVisible));
     setFocusedEditor("main.js");
     setMaximizedEditor(null);
   };
@@ -401,21 +461,7 @@ function App() {
             readOnly: file.readOnly,
           }}
           onChange={updateFileValue}
-          onEditorWillMount={(monaco) => {
-            monaco.editor.defineTheme(MAIN_EDITOR_THEME, {
-              base: isDarkTheme ? "vs-dark" : "vs",
-              inherit: true,
-              rules: [{ token: "custom-date", foreground: "008800" }],
-              colors: {
-                "editor.background": isDarkTheme ? "#2f3241" : "#fbfbfb",
-                "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
-                "editorLineNumber.foreground": isDarkTheme ? "#8a9ba8" : "#5f6b7c",
-                "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
-                "editor.lineHighlightBorder": isDarkTheme ? "#3f4456" : "#d8dae2",
-                "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
-              },
-            });
-          }}
+          onEditorWillMount={configureMonaco}
           onFocus={setFocusedEditor}
           theme={MAIN_EDITOR_THEME}
         />
@@ -446,28 +492,7 @@ function App() {
   const outputPane = (
     <div className="output" style={{ display: isConsoleShowing ? "inline-block" : "none" }}>
       <Editor
-        beforeMount={(monaco) => {
-          monaco.editor.defineTheme(OUTPUT_EDITOR_THEME, {
-            base: isDarkTheme ? "vs-dark" : "vs",
-            inherit: true,
-            rules: [{ token: "custom-date", foreground: isDarkTheme ? "8ac7d6" : "5f6b7c" }],
-            colors: {
-              "editor.background": isDarkTheme ? "#1d2427" : "#d6dde0",
-              "editor.foreground": isDarkTheme ? "#dcdcdc" : "#0e0e0e",
-              "editorLineNumber.foreground": isDarkTheme ? "#8ac7d6" : "#5f6b7c",
-              "editorLineNumber.activeForeground": isDarkTheme ? "#dcdcdc" : "#1e2527",
-              "editor.lineHighlightBackground": isDarkTheme ? "#232b30" : "#dbe2e6",
-              "editor.lineHighlightBorder": isDarkTheme ? "#232b30" : "#eeeeee",
-              "editorCursor.foreground": isDarkTheme ? "#ffffff" : "#000000",
-            },
-          });
-          monaco.languages.register({ id: "consoleOutputLanguage" });
-          monaco.languages.setMonarchTokensProvider("consoleOutputLanguage", {
-            tokenizer: {
-              root: [[/\[[^\]]+\]/, "custom-date"]],
-            },
-          });
-        }}
+        beforeMount={configureMonaco}
         defaultLanguage="consoleOutputLanguage"
         key={`output-${isDarkTheme ? "dark" : "light"}`}
         language="consoleOutputLanguage"
