@@ -26,6 +26,7 @@ import {
 } from "react-mosaic-component";
 
 import { EditorPane } from "./components/EditorPane";
+import { VersionSelect } from "./components/VersionSelect";
 import {
   buildInitialFiles,
   compareEditors,
@@ -75,17 +76,11 @@ const SIDEBAR_LAYOUT: LegacyMosaicNode<SidebarPaneId> = {
   second: "packageManager",
   splitPercentage: 50,
 };
-const AVAILABLE_VERSIONS = ["0.81.2", "0.81.1", "0.81.0", "0.80.0-rc.4"];
 const INITIAL_PACKAGES: PackageRecord[] = [
   { name: "react", versions: ["19.1.0", "19.0.0", "18.3.1"] },
   { name: "react-native", versions: ["0.81.6", "0.81.2", "0.80.0"] },
   { name: "expo", versions: ["54.0.33", "54.0.20", "53.0.21"] },
 ];
-const CONSOLE_OUTPUT = [
-  "[10:24:18 AM] Starting React Native Fiddle...",
-  "[10:24:18 AM] Using template react-native-fiddle-repro-0.81.2",
-  "[10:24:19 AM] Ready. Press Run to launch the sample app.",
-].join("\n");
 const MAIN_EDITOR_THEME = "fiddle-main";
 const OUTPUT_EDITOR_THEME = "fiddle-output";
 const DEFAULT_EDITOR_OPTIONS: Monaco.editor.IEditorOptions = {
@@ -136,7 +131,7 @@ function App() {
   const [editorLayout, setEditorLayout] = useState<MosaicNode<FileId> | null>(() =>
     buildEditorTree(INITIAL_VISIBLE_EDITORS),
   );
-  const [version, setVersion] = useState(AVAILABLE_VERSIONS[0]);
+  const [version, setVersion] = useState("");
   const [wrapperLayout, setWrapperLayout] = useState<MosaicNode<WrapperEditorId>>(
     () => convertLegacyToNary(WRAPPER_LAYOUT_WITH_CONSOLE) as MosaicNode<WrapperEditorId>,
   );
@@ -166,6 +161,15 @@ function App() {
       ...DEFAULT_OUTPUT_OPTIONS,
     }),
     [],
+  );
+  const consoleOutput = useMemo(
+    () =>
+      [
+        "[10:24:18 AM] Starting React Native Fiddle...",
+        `[10:24:18 AM] Using template react-native-fiddle-repro-${version || "latest"}`,
+        "[10:24:19 AM] Ready. Press Run to launch the sample app.",
+      ].join("\n"),
+    [version],
   );
   const visibleEditors = useMemo(
     () => (editorLayout ? (getLeaves(editorLayout) as FileId[]) : []),
@@ -492,7 +496,7 @@ function App() {
           ...outputOptions,
         }}
         theme={OUTPUT_EDITOR_THEME}
-        value={CONSOLE_OUTPUT}
+        value={consoleOutput}
       />
     </div>
   );
@@ -568,19 +572,7 @@ function App() {
               <Button icon="cog" title="Setting" />
             </ControlGroup>
             <ControlGroup fill={false} vertical={false}>
-              <Button
-                id="version-chooser"
-                icon="saved"
-                onClick={() =>
-                  setVersion(
-                    (current) =>
-                      AVAILABLE_VERSIONS[
-                        (AVAILABLE_VERSIONS.indexOf(current) + 1) % AVAILABLE_VERSIONS.length
-                      ],
-                  )
-                }
-                text={version}
-              />
+              <VersionSelect currentVersion={version} onVersionSelect={setVersion} />
               <Button icon="play" id="button-run" text="Run" />
             </ControlGroup>
             <ControlGroup fill={false} vertical={false}>
