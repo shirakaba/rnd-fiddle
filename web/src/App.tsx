@@ -140,6 +140,9 @@ function App() {
   const [wrapperLayout, setWrapperLayout] = useState<MosaicNode<WrapperEditorId>>(
     () => convertLegacyToNary(WRAPPER_LAYOUT_WITH_CONSOLE) as MosaicNode<WrapperEditorId>,
   );
+  const [sidebarLayout, setSidebarLayout] = useState<MosaicNode<SidebarPaneId>>(
+    () => convertLegacyToNary(SIDEBAR_LAYOUT) as MosaicNode<SidebarPaneId>,
+  );
   const [gistUrl, setGistUrl] = useState("");
   const [moduleQuery, setModuleQuery] = useState("");
   const [packages, setPackages] = useState(INITIAL_PACKAGES);
@@ -497,7 +500,10 @@ function App() {
   const sidebarPane = (
     <Mosaic<SidebarPaneId>
       blueprintNamespace="bp3"
-      initialValue={SIDEBAR_LAYOUT}
+      onChange={(nextLayout) => {
+        if (nextLayout === null) return;
+        setSidebarLayout(nextLayout);
+      }}
       renderTile={(id) => {
         if (id === "fileTree") {
           return (
@@ -549,6 +555,7 @@ function App() {
           </div>
         );
       }}
+      value={sidebarLayout}
     />
   );
 
