@@ -372,18 +372,7 @@ function App() {
           hasCaret: false,
           icon: "document",
           isSelected: focusedEditor === file.id,
-          label: (
-            <span
-              className="pointer"
-              onClick={() => {
-                if (!isVisible) toggleEditorVisibility(file.id);
-                setFocusedEditor(file.id);
-                setMaximizedEditor(null);
-              }}
-            >
-              {file.id}
-            </span>
-          ),
+          label: <span className="pointer">{file.id}</span>,
           secondaryLabel: (
             <ButtonGroup>
               <Button
@@ -513,7 +502,22 @@ function App() {
         if (id === "fileTree") {
           return (
             <div className="fiddle-scrollbar">
-              <Tree contents={fileTreeNodes} />
+              <Tree
+                contents={fileTreeNodes}
+                onNodeClick={(node) => {
+                  if (typeof node.id !== "number") return;
+
+                  const file = files[node.id];
+                  if (!file) return;
+
+                  if (!visibleEditors.includes(file.id)) {
+                    toggleEditorVisibility(file.id);
+                  }
+
+                  setFocusedEditor(file.id);
+                  setMaximizedEditor(null);
+                }}
+              />
             </div>
           );
         }
