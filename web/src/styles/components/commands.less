@@ -10,18 +10,29 @@ header {
   background-color: @background-3;
   -webkit-app-region: drag;
 
-  #version-chooser .bp3-button-text::before {
-    content: 'React Native macOS v';
+  #version-chooser {
+    min-width: 250px;
   }
 
   #version-chooser .bp3-button-text {
     font-variant-numeric: tabular-nums;
   }
 
-  @media (max-width: 980px) {
-    #version-chooser .bp3-button-text::before {
-      content: 'v';
-    }
+  #version-chooser .version-chooser-shimmer {
+    display: block;
+    width: 13.95em;
+    max-width: 100%;
+    height: 1em;
+    border-radius: 999px;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(138, 199, 214, 0.14) 0%,
+        rgba(138, 199, 214, 0.3) 45%,
+        rgba(138, 199, 214, 0.14) 100%
+      );
+    background-size: 200% 100%;
+    animation: version-chooser-shimmer 1.2s linear infinite;
   }
 
   @media (max-width: 800px) {
@@ -45,6 +56,16 @@ header {
     .address-bar .bp3-input {
       padding-right: 36px !important;
     }
+  }
+}
+
+@keyframes version-chooser-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
   }
 }
 

@@ -11,10 +11,14 @@ type VersionSelectProps = {
   onVersionSelect: (version: string) => void;
 };
 
+const IS_DEBUG_BUILD = import.meta.env.DEV;
 const FALLBACK_RELEASES: ReleaseInfo[] = [
   { version: "0.79.2", publishedAt: "2026-03-30T15:53:40Z" },
   { version: "0.79.1", publishedAt: "2026-01-11T14:01:13Z" },
 ];
+const RELEASE_FETCH_ERROR_MESSAGE = "Unable to fetch. Try again later.";
+const VERSION_LABEL_PREFIX = "React Native macOS v";
+const LOADING_PLACEHOLDER = <span aria-hidden="true" className="version-chooser-shimmer" />;
 
 function compareVersionsDesc(a: string, b: string) {
   return b.localeCompare(a, undefined, {
@@ -32,7 +36,7 @@ async function fetchReleases(signal?: AbortSignal) {
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub API request failed with status ${response.status}`);
+    throw new Error(`GitHub API error: ${response.status}`);
   }
 
   const releases = (await response.json()) as Array<{
@@ -57,7 +61,7 @@ async function fetchReleases(signal?: AbortSignal) {
 export function VersionSelect({ currentVersion, onVersionSelect }: VersionSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [releases, setReleases] = useState<ReleaseInfo[]>(FALLBACK_RELEASES);
+  const [releases, setReleases] = useState<ReleaseInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -71,12 +75,27 @@ export function VersionSelect({ currentVersion, onVersionSelect }: VersionSelect
           setReleases(nextReleases);
           setLoadError(null);
         } else {
-          setLoadError("No releases found");
+          setLoadError(RELEASE_FETCH_ERROR_MESSAGE);
         }
       })
       .catch((error: unknown) => {
         if (abortController.signal.aborted) return;
-        setLoadError(error instanceof Error ? error.message : "Failed to load releases");
+
+        const message = error instanceof Error ? error.message : "Failed to load releases";
+        const shouldUseDebugFallback =
+          IS_DEBUG_BUILD &&
+          (message === "GitHub API error: 403" || message === "GitHub API error: 504");
+
+        if (shouldUseDebugFallback) {
+          setReleases(FALLBACK_RELEASES);
+          setLoadError(
+            `GitHub rate limit hit during development. Falling back to cached releases.`,
+          );
+          return;
+        }
+
+        setReleases([]);
+        setLoadError(RELEASE_FETCH_ERROR_MESSAGE);
       })
       .finally(() => {
         if (!abortController.signal.aborted) {
@@ -170,26 +189,37 @@ export function VersionSelect({ currentVersion, onVersionSelect }: VersionSelect
             />
           ))
         ) : (
-          <MenuItem disabled={true} text="No versions found." />
+          <MenuItem disabled={true} text={loadError ?? "No versions found."} />
         )}
       </Menu>
     </div>
   );
 
+  const buttonText = currentVersion
+    ? `${VERSION_LABEL_PREFIX}${currentVersion}`
+    : isLoading
+      ? LOADING_PLACEHOLDER
+      : loadError
+        ? "Unable to fetch"
+        : "Select version";
+
   return (
     <div className="version-select" ref={rootRef}>
       <Button
+        className={isLoading ? "version-chooser-loading" : undefined}
         id="version-chooser"
         icon="saved"
         intent={loadError ? "warning" : undefined}
+        disabled={!isLoading && releases.length === 0}
         onClick={() => {
+          if (!isLoading && releases.length === 0) return;
           setIsOpen((current) => !current);
           if (isOpen) {
             setQuery("");
           }
         }}
         rightIcon="caret-down"
-        text={currentVersion || (isLoading ? "Loading..." : "Select version")}
+        text={buttonText}
         title={loadError ?? "Select a React Native macOS version"}
       />
       {isOpen ? menu : null}
