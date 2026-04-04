@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "vite --strictPort --port 5173",
+    "start": "vite --strictPort",
     "dev": "sh ../scripts/dev-with-tmux.sh",
     "build": "tsc -b && vite build",
     "format": "oxfmt",
