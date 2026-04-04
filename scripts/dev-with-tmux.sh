@@ -20,7 +20,7 @@ esac
 METRO_PORT=$((8081 + PORT_OFFSET))
 VITE_PORT=$((5173 + PORT_OFFSET))
 MACOS_OFFSET=$PORT_OFFSET
-METRO_COMMAND="node --run start -- --port $METRO_PORT"
+METRO_COMMAND="VITE_PORT=$VITE_PORT node --run start -- --port $METRO_PORT"
 VITE_COMMAND="node --run start -- --port $VITE_PORT"
 MACOS_COMMAND="node --run macos -- $MACOS_OFFSET"
 
