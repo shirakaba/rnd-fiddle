@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vite --strictPort --port 5173",
+    "dev": "sh ../scripts/dev-with-tmux.sh",
     "build": "tsc -b && vite build",
     "format": "oxfmt",
     "preview": "vite preview"

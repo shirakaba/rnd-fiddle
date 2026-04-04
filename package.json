@@ -8,6 +8,7 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "dev": "sh ./scripts/dev-with-tmux.sh",
     "prepare": "husky",
     "lint-staged": "lint-staged",
     "format": "oxfmt",
