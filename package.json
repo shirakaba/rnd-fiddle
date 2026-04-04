@@ -14,7 +14,7 @@
     "format": "oxfmt",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "macos": "react-native run-macos"
+    "macos": "sh ./scripts/run-macos.sh"
   },
   "dependencies": {
     "dubloon": "^0.0.4",
