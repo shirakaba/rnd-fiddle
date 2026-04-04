@@ -8,8 +8,9 @@ SOCKET_NAME=$1
 SESSION_NAME=$2
 METRO_PORT=$3
 VITE_PORT=$4
-ACTION=$5
-CURRENT_PANE_INDEX=$6
+MACOS_OFFSET=$5
+ACTION=$6
+CURRENT_PANE_INDEX=$7
 
 tmux_dev() {
   tmux -L "$SOCKET_NAME" "$@"
@@ -22,6 +23,9 @@ pane_target() {
       ;;
     1)
       printf '%s\n' "$SESSION_NAME:$WINDOW_NAME.1"
+      ;;
+    2)
+      printf '%s\n' "$SESSION_NAME:$WINDOW_NAME.2"
       ;;
     *)
       echo "Unknown pane index: $1" >&2
@@ -84,6 +88,20 @@ wait_for_shell() {
   return 1
 }
 
+pane_is_shell() {
+  target=$1
+  command_name=$(tmux_dev display-message -p -t "$target" "#{pane_current_command}" 2>/dev/null || true)
+
+  case "$command_name" in
+    sh|bash|zsh|fish)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 interrupt_pane() {
   tmux_dev send-keys -t "$1" C-c
 }
@@ -106,6 +124,13 @@ OTHER_PANE_INDEX=$(other_pane_index "$CURRENT_PANE_INDEX")
 OTHER_TARGET=$(pane_target "$OTHER_PANE_INDEX")
 METRO_TARGET=$(pane_target 0)
 VITE_TARGET=$(pane_target 1)
+MACOS_TARGET=$(pane_target 2)
+
+wait_for_all_panes_to_be_shells() {
+  while ! pane_is_shell "$METRO_TARGET" || ! pane_is_shell "$VITE_TARGET" || ! pane_is_shell "$MACOS_TARGET"; do
+    sleep 0.1
+  done
+}
 
 case "$ACTION" in
   kill-current)
@@ -118,8 +143,7 @@ case "$ACTION" in
   kill-both-close)
     interrupt_pane "$METRO_TARGET"
     interrupt_pane "$VITE_TARGET"
-    wait_for_shell "$METRO_TARGET" || true
-    wait_for_shell "$VITE_TARGET" || true
+    wait_for_all_panes_to_be_shells
     tmux_dev kill-session -t "$SESSION_NAME"
     ;;
   restart-current)
