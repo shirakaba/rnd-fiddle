@@ -13,6 +13,6 @@ esac
 
 METRO_PORT=$((8081 + PORT_OFFSET))
 
-echo "react-native run-macos --port $METRO_PORT"
+echo "react-native run-macos --no-packager --port $METRO_PORT"
 
-react-native run-macos --port $METRO_PORT
+react-native run-macos --no-packager --port $METRO_PORT
