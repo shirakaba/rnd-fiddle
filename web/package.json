@@ -6,8 +6,9 @@
   "scripts": {
     "start": "vite --strictPort",
     "dev": "sh ../scripts/dev-with-tmux.sh",
-    "build": "tsc -b && vite build",
+    "build": "tsgo -b && vite build",
     "format": "oxfmt",
+    "typecheck": "tsgo -b",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -92,3 +92,19 @@ node --run start -- $PORT_OFFSET
 ```
 
 This runs the React Vite app on http://localhost:5174. You can develop it just like a regular web app by connecting to that address via the Chrome DevTools MCP server.
+
+## Developing
+
+After any change, run the formatting:
+
+```sh
+# From the base of the monorepo:
+
+# 1. Run the formatting
+node --run format
+
+# 2. Run the typecheck
+# (If you only touched web code, you can just
+# run `node --run typecheck:web` instead)
+node --run typecheck
+```

@@ -12,6 +12,9 @@
     "prepare": "husky",
     "lint-staged": "lint-staged",
     "format": "oxfmt",
+    "typecheck": "bun run typecheck:native && bun run typecheck:web",
+    "typecheck:native": "tsgo --noEmit",
+    "typecheck:web": "bun run --cwd web typecheck",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "macos": "sh ./scripts/run-macos.sh"
