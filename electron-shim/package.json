@@ -1,0 +1,7 @@
+{
+  "name": "react-native-electron-shim",
+  "version": "0.1.0",
+  "description": "A shim of the Electron APIs for React Native apps that embed webviews",
+  "react-native": "src/index.ts",
+  "devDependencies": {}
+}
