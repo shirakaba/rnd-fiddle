@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowJs": true,
+    "strict": true,
     "esModuleInterop": true,
     "jsx": "react-native",
     "lib": ["DOM", "ESNext"],
