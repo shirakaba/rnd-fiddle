@@ -92,7 +92,7 @@ If you're just doing UI work, you may be able to simplify things by just running
 PORT_OFFSET=1
 VITE_PORT=$((5173 + PORT_OFFSET))
 cd web
-node --run start -- $PORT_OFFSET
+node --run start -- $VITE_PORT
 ```
 
 This runs the React Vite app on http://localhost:5174. You can develop it just like a regular web app by connecting to that address via the Chrome DevTools MCP server.
