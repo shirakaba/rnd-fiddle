@@ -26,7 +26,7 @@
       },
     },
     "electron-shim": {
-      "name": "react-native-electron-shim",
+      "name": "dubloon-electron-shim",
       "version": "0.1.0",
       "dependencies": {
         "dom-events-wintercg": "^21.0.0",
@@ -881,6 +881,8 @@
 
     "dubloon": ["dubloon@0.0.4", "", { "dependencies": { "@babel/preset-typescript": "^7.27.1", "zod": "^3.25.67" }, "peerDependencies": { "expo": "*", "react-native": "*", "react-native-webview": "*" } }, "sha512-NthJ9pYeS88C5pEvHuO+yUvue2AvfGvrxvj9vHYaHx0mVL9mDqgwfCZnOyethVEh3OoRX8Hbht+5lAU4aawxhA=="],
 
+    "dubloon-electron-shim": ["dubloon-electron-shim@workspace:electron-shim"],
+
     "dunder-proto": ["dunder-proto@1.0.1", "", { "dependencies": { "call-bind-apply-helpers": "^1.0.1", "es-errors": "^1.3.0", "gopd": "^1.2.0" } }, "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A=="],
 
     "ee-first": ["ee-first@1.1.1", "", {}, "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow=="],
@@ -1478,8 +1480,6 @@
     "react-mosaic-component": ["react-mosaic-component@7.0.0-beta0", "", { "dependencies": { "classnames": "^2.5.1", "dnd-core": "16.0.1", "immutability-helper": "^3.1.1", "lodash-es": "^4.17.21", "prop-types": "^15.8.1", "rdndmb-html5-to-touch": "^9.0.0", "react-dnd": "^16.0.1", "react-dnd-html5-backend": "^16.0.1", "react-dnd-multi-backend": "^9.0.0", "react-dnd-touch-backend": "^16.0.1", "uuid": "^11.1.0" }, "peerDependencies": { "react": "16 - 19" } }, "sha512-EUeXrDZm2w7mw2Vq8Nw7dovw+Hi5YtCe3ybI/Fnuw4mXk6AZ8p4N+XsJL9QB8sr724zUszpCveaLThZ7/XSLow=="],
 
     "react-native": ["react-native@0.81.6", "", { "dependencies": { "@jest/create-cache-key-function": "^29.7.0", "@react-native/assets-registry": "0.81.6", "@react-native/codegen": "0.81.6", "@react-native/community-cli-plugin": "0.81.6", "@react-native/gradle-plugin": "0.81.6", "@react-native/js-polyfills": "0.81.6", "@react-native/normalize-colors": "0.81.6", "@react-native/virtualized-lists": "0.81.6", "abort-controller": "^3.0.0", "anser": "^1.4.9", "ansi-regex": "^5.0.0", "babel-jest": "^29.7.0", "babel-plugin-syntax-hermes-parser": "0.29.1", "base64-js": "^1.5.1", "commander": "^12.0.0", "flow-enums-runtime": "^0.0.6", "glob": "^7.1.1", "invariant": "^2.2.4", "jest-environment-node": "^29.7.0", "memoize-one": "^5.0.0", "metro-runtime": "^0.83.1", "metro-source-map": "^0.83.1", "nullthrows": "^1.1.1", "pretty-format": "^29.7.0", "promise": "^8.3.0", "react-devtools-core": "^6.1.5", "react-refresh": "^0.14.0", "regenerator-runtime": "^0.13.2", "scheduler": "0.26.0", "semver": "^7.1.3", "stacktrace-parser": "^0.1.10", "whatwg-fetch": "^3.0.0", "ws": "^6.2.3", "yargs": "^17.6.2" }, "peerDependencies": { "@types/react": "^19.1.4", "react": "^19.1.4" }, "optionalPeers": ["@types/react"], "bin": { "react-native": "cli.js" } }, "sha512-X/tI8GqfzVaa+zfbE4+lySNN5UzwBIAVRHVZPKymOny9Acc5GYYcjAcEVfG3AM4h920YALWoSl8favnDmQEWIg=="],
-
-    "react-native-electron-shim": ["react-native-electron-shim@workspace:electron-shim"],
 
     "react-native-is-edge-to-edge": ["react-native-is-edge-to-edge@1.2.1", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-FLbPWl/MyYQWz+KwqOZsSyj2JmLKglHatd3xLZWskXOpRaio4LfEDEz8E/A6uD8QoTHW6Aobw1jbEwK7KMgR7Q=="],
 
