@@ -9,5 +9,7 @@ import { WebView } from "react-native-webview";
 declare const __VITE_PORT: number;
 
 export default function App() {
+  console.log(`EventTarget`, globalThis.EventTarget);
+  console.log(`EventEmitter`, (globalThis as any).EventEmitter);
   return <WebView {...connectionProps({ port: __VITE_PORT })} webviewDebuggingEnabled />;
 }
