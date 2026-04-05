@@ -19,11 +19,12 @@ This is a standard Expo development build, with a `react-native-macos` app added
 ├── app.json                              # The Expo app.json file, which we
 │                                         # largely cannot use due to limited
 │                                         # Expo support for react-native-macos
-├── assets
+├── assets                                # The React Native app's assets
 ├── babel.config.js
 ├── bun.lock
 ├── index.ts                              # The React Native app entrypoint
-├── ios
+├── ios                                   # The React Native iOS app (not in use
+│                                         # - we may just delete this in future)
 ├── macos                                 # The React Native macOS app
 ├── metro.config.js
 ├── node_modules
@@ -32,9 +33,12 @@ This is a standard Expo development build, with a `react-native-macos` app added
 │   ├── @blueprintjs%2Fcore@3.54.0.patch  # Stop Blueprint using invalid CSS
 │   └── expo-modules-core@3.0.29.patch    # Make EMC build on React Native macOS
 ├── scripts
+├── src                                   # The rest of the React Native sources
 ├── tsconfig.json
 └── web                                   # The React Vite embedded web app
 ```
+
+In Electron parlance, `index.ts`, `src`, `assets`, and `macos` is broadly where our "main process" sources live, while everything under `web` is our "renderer process" code.
 
 ## Installation
 
