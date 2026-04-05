@@ -70,6 +70,7 @@ if ! command -v tmux >/dev/null 2>&1; then
 fi
 
 if tmux_dev has-session -t "$SESSION_NAME" 2>/dev/null; then
+  tmux_dev unbind-key -n m 2>/dev/null || true
   exec env TMUX= tmux -L "$SOCKET_NAME" attach-session -t "$SESSION_NAME"
 fi
 
@@ -100,4 +101,5 @@ start_pane_command "$SESSION_NAME:$WINDOW_NAME.0" "$METRO_COMMAND"
 start_pane_command "$SESSION_NAME:$WINDOW_NAME.1" "$VITE_COMMAND"
 prefill_pane_command "$SESSION_NAME:$WINDOW_NAME.2" "$MACOS_COMMAND"
 
+tmux_dev unbind-key -n m 2>/dev/null || true
 exec env TMUX= tmux -L "$SOCKET_NAME" attach-session -t "$SESSION_NAME"
