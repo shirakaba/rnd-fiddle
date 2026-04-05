@@ -4,7 +4,11 @@
 import { EventTarget } from "dom-events-wintercg";
 
 class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
-  private readonly invokers: Record<string, EventTarget> = {};
+  private readonly invokers: {
+    [channel: string]: {
+      [transactionId: number]: EventTarget;
+    };
+  } = {};
   private invokeCount = 0;
   private readonly listeners: Record<string, EventTarget> = {};
 
@@ -22,12 +26,18 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
 
       const transactionId = ++this.invokeCount;
 
-      let invoker = this.invokers[channel];
-      if (!invoker) {
-        invoker = this.invokers[channel] = new EventTarget();
+      let invokersForChannel: { [transactionId: number]: EventTarget };
+      let invoker: EventTarget;
+      if (!this.invokers[channel]) {
+        this.invokers[channel] = {};
       }
+      invokersForChannel = this.invokers[channel];
+      if (!this.invokers[channel][transactionId]) {
+        this.invokers[channel][transactionId] = new EventTarget();
+      }
+      invoker = this.invokers[channel][transactionId];
 
-      let removeEventHandler: () => void;
+      let removeInvoker: () => void;
       const onEvent = (event: Event) => {
         if (!(event instanceof CustomEvent)) {
           return;
@@ -55,20 +65,16 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
 
         const value = "value" in detail ? detail.value : undefined;
 
-        // FIXME: Although we've removed the event listener, we can't tell
-        // whether it's safe to delete our reference to the EventTarget (there's
-        // no public API for checking listener count). So we will accumulate
-        // a new EventTarget each time invoke() is called on a new channel.
-        //
-        // Could be fixed by using a model of one EventTarget per invoke() call,
-        // instead of one shared EventTarget for each channel. But also unlikely
-        // to be a significant leak in any real-world app anyway.
-        removeEventHandler();
+        removeInvoker();
         resolve(value);
       };
       invoker.addEventListener(channel, onEvent);
-      removeEventHandler = () => {
+      removeInvoker = () => {
         invoker.removeEventListener(channel, onEvent);
+        delete invokersForChannel[transactionId];
+        if (!Object.keys(invokersForChannel).length) {
+          delete this.invokers[channel];
+        }
       };
 
       let message: string;
@@ -88,7 +94,7 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
           ),
         );
       } finally {
-        removeEventHandler();
+        removeInvoker();
       }
 
       window.ReactNativeWebView.postMessage(message);
@@ -132,7 +138,7 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
     const { channel, transactionId } = message;
     const value = "detail" in message ? message.detail : undefined;
 
-    this.invokers[channel]?.dispatchEvent(
+    this.invokers[channel]?.[transactionId]?.dispatchEvent(
       new CustomEvent(message.type, {
         detail: {
           transactionId,
