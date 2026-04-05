@@ -28,6 +28,9 @@
     "electron-shim": {
       "name": "react-native-electron-shim",
       "version": "0.1.0",
+      "dependencies": {
+        "dom-events-wintercg": "^21.0.0",
+      },
       "devDependencies": {
         "electron": "^41.1.1",
       },
@@ -863,6 +866,8 @@
     "dnd-core": ["dnd-core@16.0.1", "", { "dependencies": { "@react-dnd/asap": "^5.0.1", "@react-dnd/invariant": "^4.0.1", "redux": "^4.2.0" } }, "sha512-HK294sl7tbw6F6IeuK16YSBUoorvHpY8RHO+9yFfaJyCDVb6n7PRcezrOEOa2SBCqiYpemh5Jx20ZcjKdFAVng=="],
 
     "dnd-multi-backend": ["dnd-multi-backend@9.0.0", "", { "peerDependencies": { "dnd-core": "^16.0.1" } }, "sha512-BCUFes4x0LA2bZyEZFHeQzZ1CBZo6PB40zMOG/gNgICxjAZfN2jHgISowqkR1isdx/msUNzscxEb17SP7yc4KQ=="],
+
+    "dom-events-wintercg": ["dom-events-wintercg@21.0.0", "", {}, "sha512-Q28LCZlLeI7+FNbDN9wUk5nYSaWcnbbe6BjPDHDoGcYMFOwi7ux2ab7sVoir5ICEQmO44QnYGLQf/l2bjCy5wQ=="],
 
     "dom-helpers": ["dom-helpers@3.4.0", "", { "dependencies": { "@babel/runtime": "^7.1.2" } }, "sha512-LnuPJ+dwqKDIyotW1VzmOZ5TONUN7CwkCR5hrgawTUbkBGYdeoNLZo6nNfGkCrjtE1nXXaj7iMMpDa8/d9WoIA=="],
 

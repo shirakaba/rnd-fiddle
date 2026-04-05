@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "A shim of the Electron APIs for React Native apps that embed webviews",
   "react-native": "src/index.ts",
+  "dependencies": {
+    "dom-events-wintercg": "^21.0.0"
+  },
   "devDependencies": {
     "electron": "^41.1.1"
   }
