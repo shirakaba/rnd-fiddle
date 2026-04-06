@@ -1,7 +1,4 @@
 /// <reference lib="dom" />
-/// <reference path="../dom-events-wintercg.d.ts" />
-
-import { EventTarget } from "dom-events-wintercg";
 
 class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
   private readonly invokers: {
@@ -107,14 +104,13 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
         console.log(`invoke("${channel}", <detail>) 6a`);
       } catch (cause) {
         console.log(`invoke("${channel}", <detail>) 6b`);
+        removeInvoker();
         return reject(
           new Error(
             "Unable to stringify IPC message. Make sure `detail` is a serialisable value.",
             { cause },
           ),
         );
-      } finally {
-        removeInvoker();
       }
 
       window.ReactNativeWebView.postMessage(message);

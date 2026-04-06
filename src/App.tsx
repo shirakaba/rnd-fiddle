@@ -94,6 +94,9 @@ export default function App() {
         // does with its messages) and sadly the message didn't make it to the
         // other side. So it's a limitation of react-native-webview.
         webView.postMessage(JSON.stringify(response));
+
+        // Suppress error from react-native-webview
+        true;
       }}
     />
   );
