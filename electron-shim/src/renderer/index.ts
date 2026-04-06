@@ -23,8 +23,9 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
       }
       console.log(`invoke("${channel}", ${detail}) 2b`);
 
-      if (!Object.keys(this.invokers)) {
-        window.addEventListener("message", this.lazyHandleInvokeResponse, true);
+      if (!Object.keys(this.invokers).length) {
+        console.log(`invoke("${channel}", ${detail}) 2c!!`);
+        window.addEventListener("message", this.lazyHandleInvokeResponse.bind(this), true);
       }
 
       const transactionId = ++this.invokeCount;
@@ -131,6 +132,8 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
     } catch (error) {
       return;
     }
+
+    console.log(`[lazyHandleInvokeResponse]`, message);
 
     // We're expecting the WebView to send us:
     // {

@@ -88,10 +88,12 @@ export default function App() {
           return;
         }
 
-        // FIXME: Currently this is firing at the window as a "message" event,
-        // but IpcRenderer.invoke() (in electron-shim/src/renderer/index.ts) is
-        // listening for it via invoker.addListener().
-        webView.injectJavaScript(`window.postMessage("message", ${JSON.stringify(response)})`);
+        console.log("[IPC] sending back invoke-response...", response);
+
+        // I tried passing the response without stringification (like VS Code
+        // does with its messages) and sadly the message didn't make it to the
+        // other side. So it's a limitation of react-native-webview.
+        webView.postMessage(JSON.stringify(response));
       }}
     />
   );
