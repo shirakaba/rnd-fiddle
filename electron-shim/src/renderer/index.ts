@@ -14,11 +14,14 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
 
   invoke(channel: string, detail?: CustomEvent["detail"]): Promise<any> {
     return new Promise((resolve, reject) => {
+      console.log(`invoke("${channel}", ${detail}) 1`);
       if (!isReactNativeWebViewWindow(window)) {
+        console.log(`invoke("${channel}", ${detail}) 2a`);
         return reject(
           new Error("Expected window.ReactNativeWebView to be populated, but got undefined."),
         );
       }
+      console.log(`invoke("${channel}", ${detail}) 2b`);
 
       if (!Object.keys(this.invokers)) {
         window.addEventListener("message", this.lazyHandleInvokeResponse, true);
@@ -40,8 +43,11 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
       let removeInvoker: () => void;
       const onEvent = (event: Event) => {
         if (!(event instanceof CustomEvent)) {
+          console.log(`invoke("${channel}", <detail>) 3a`);
           return;
         }
+
+        console.log(`invoke("${channel}", <detail>) 3b`);
 
         // We're expecting this.lazyHandleInvokeResponse() to pass along the
         // message from the WebView in this shape:
@@ -60,22 +66,33 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
           !("transactionId" in detail) ||
           detail.transactionId !== transactionId
         ) {
+          console.log(`invoke("${channel}", <detail>) 4a`);
           return;
         }
+
+        console.log(`invoke("${channel}", <detail>) 4b`);
 
         const value = "value" in detail ? detail.value : undefined;
 
         removeInvoker();
         resolve(value);
       };
+      // FIXME: Currently we are listening via invoker.addListener(), but the
+      // actual event from the WebView is being fired at window as a "message"
+      // event.
       invoker.addEventListener(channel, onEvent);
       removeInvoker = () => {
         invoker.removeEventListener(channel, onEvent);
         delete invokersForChannel[transactionId];
         if (!Object.keys(invokersForChannel).length) {
+          console.log(`invoke("${channel}", <detail>) 7a`);
           delete this.invokers[channel];
+        } else {
+          console.log(`invoke("${channel}", <detail>) 7b`);
         }
       };
+
+      console.log(`invoke("${channel}", <detail>) 5`);
 
       let message: string;
       try {
@@ -86,7 +103,9 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
           channel,
           detail,
         });
+        console.log(`invoke("${channel}", <detail>) 6a`);
       } catch (cause) {
+        console.log(`invoke("${channel}", <detail>) 6b`);
         return reject(
           new Error(
             "Unable to stringify IPC message. Make sure `detail` is a serialisable value.",

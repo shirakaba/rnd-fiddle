@@ -105,9 +105,22 @@ declare namespace Dubloon {
     removeEventListener(channel: string, listener: (event: CustomEvent) => void): void;
   }
 
-  namespace CrossProcessExports {}
+  namespace CrossProcessExports {
+    const ipcMain: IpcMain;
+    type IpcMain = Dubloon.IpcMain;
+    const ipcRenderer: IpcRenderer;
+    type IpcRenderer = Dubloon.IpcRenderer;
+  }
 
-  namespace Renderer {}
+  namespace Main {
+    const ipcMain: IpcMain;
+    type IpcMain = Dubloon.IpcMain;
+  }
+
+  namespace Renderer {
+    const ipcRenderer: IpcRenderer;
+    type IpcRenderer = Dubloon.IpcRenderer;
+  }
 
   const ipcMain: IpcMain;
   const ipcRenderer: IpcRenderer;
@@ -118,9 +131,21 @@ declare module "dubloon-electron-shim" {
 }
 
 declare module "dubloon-electron-shim/main" {
-  export = Electron.Main;
+  export = Dubloon.Main;
 }
 
 declare module "dubloon-electron-shim/renderer" {
-  export = Electron.Renderer;
+  export = Dubloon.Renderer;
+}
+
+interface NodeRequireFunction {
+  (moduleName: "dubloon-electron-shim"): typeof Dubloon.CrossProcessExports;
+  (moduleName: "dubloon-electron-shim/main"): typeof Dubloon.Main;
+  (moduleName: "dubloon-electron-shim/renderer"): typeof Dubloon.Renderer;
+}
+
+interface NodeRequire {
+  (moduleName: "dubloon-electron-shim"): typeof Dubloon.CrossProcessExports;
+  (moduleName: "dubloon-electron-shim/main"): typeof Dubloon.Main;
+  (moduleName: "dubloon-electron-shim/renderer"): typeof Dubloon.Renderer;
 }

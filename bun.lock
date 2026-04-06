@@ -6,6 +6,7 @@
       "name": "rndfiddle",
       "dependencies": {
         "dubloon": "^0.0.4",
+        "dubloon-electron-shim": "workspace:",
         "expo": "~54.0.33",
         "expo-status-bar": "~3.0.9",
         "react": "19.1.4",
@@ -45,6 +46,7 @@
         "@blueprintjs/select": "^3.15.0",
         "@monaco-editor/react": "^4.7.0",
         "classnames": "^2.5.1",
+        "dubloon-electron-shim": "workspace:",
         "less": "^4.4.2",
         "monaco-editor": "^0.55.1",
         "react": "catalog:",

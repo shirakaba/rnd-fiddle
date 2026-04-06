@@ -2,7 +2,20 @@
   "name": "dubloon-electron-shim",
   "version": "0.1.0",
   "description": "A shim of the Electron APIs for React Native apps that embed webviews",
-  "react-native": "src/index.ts",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts",
+      "types": "./index.d.ts"
+    },
+    "./main": {
+      "default": "./src/main/index.ts",
+      "types": "./index.d.ts"
+    },
+    "./renderer": {
+      "default": "./src/renderer/index.ts",
+      "types": "./index.d.ts"
+    }
+  },
   "dependencies": {
     "dom-events-wintercg": "^21.0.0"
   },
