@@ -1,20 +1,8 @@
 import type { WebView } from "react-native-webview";
 
-import { ElectronEvent } from "./event";
+import { DubloonEvent } from "./event";
 
-function postMessage(
-  webView: WebView | null,
-  message: {
-    namespace: "dubloon";
-    type: "send";
-    channel: string;
-    args: unknown[];
-  },
-) {
-  webView?.postMessage(JSON.stringify(message));
-}
-
-export class IpcMainEventImpl extends ElectronEvent {
+export class IpcMainEventImpl extends DubloonEvent {
   readonly frameId = 0;
   readonly ports: [] = [];
   readonly processId = 0;
@@ -23,44 +11,25 @@ export class IpcMainEventImpl extends ElectronEvent {
   readonly senderFrame = null;
   readonly type = "frame";
   private readonly webView: WebView | null;
-  private readonly sendMessage: (
-    webView: WebView | null,
-    message: {
-      namespace: "dubloon";
-      type: "send";
-      channel: string;
-      args: unknown[];
-    },
-  ) => void;
 
-  constructor(
-    webView: WebView | null,
-    sendMessage: (
-      webView: WebView | null,
-      message: {
-        namespace: "dubloon";
-        type: "send";
-        channel: string;
-        args: unknown[];
-      },
-    ) => void = postMessage,
-  ) {
+  constructor(webView: WebView | null) {
     super("frame");
     this.webView = webView;
-    this.sendMessage = sendMessage;
   }
 
   reply(channel: string, ...args: unknown[]): void {
-    this.sendMessage(this.webView, {
-      namespace: "dubloon",
-      type: "send",
-      channel,
-      args,
-    });
+    this.webView?.postMessage(
+      JSON.stringify({
+        namespace: "dubloon",
+        type: "send",
+        channel,
+        args,
+      }),
+    );
   }
 }
 
-export class IpcMainInvokeEventImpl extends ElectronEvent {
+export class IpcMainInvokeEventImpl extends DubloonEvent {
   readonly frameId = 0;
   readonly processId = 0;
   readonly sender = null as never;
@@ -72,7 +41,7 @@ export class IpcMainInvokeEventImpl extends ElectronEvent {
   }
 }
 
-export class IpcRendererEventImpl extends ElectronEvent {
+export class IpcRendererEventImpl extends DubloonEvent {
   readonly ports: [] = [];
   readonly sender: any;
 

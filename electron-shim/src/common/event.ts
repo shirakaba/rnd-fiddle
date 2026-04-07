@@ -1,4 +1,4 @@
-export class ElectronEvent implements Event {
+export class DubloonEvent implements Dubloon.Event {
   readonly NONE = 0;
   readonly CAPTURING_PHASE = 1;
   readonly AT_TARGET = 2;
