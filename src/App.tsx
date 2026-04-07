@@ -15,9 +15,9 @@ export default function App() {
   const ref = useRef<WebView>(null);
 
   useEffect(() => {
-    ipcMain.handle("ping", ({ detail }) => Date.now() - detail);
-    ipcMain.addEventListener("counter-value", ({ detail }) => {
-      console.log("counter-value", detail);
+    ipcMain.handle("ping", (_event, sentAt: number) => Date.now() - sentAt);
+    ipcMain.on("counter-value", (_event, value) => {
+      console.log("counter-value", value);
     });
   }, []);
 

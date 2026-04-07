@@ -1,112 +1,54 @@
-/// <reference lib="dom" />
+import EventEmitter from "eventemitter3";
 
-import {
-  isInvokeResponse,
-  isInvokeResponseEvent,
-  isWebViewMessage,
-  type SendMessage,
-} from "../common";
+import { isInvokeResponse, isSendMessage, isWebViewMessage, type SendMessage } from "../common";
+import { IpcRendererEventImpl } from "../common/ipc-event";
 
-class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
-  private readonly invokers: {
-    [channel: string]: {
-      [transactionId: number]: EventTarget;
+class IpcRenderer extends EventEmitter implements Dubloon.IpcRenderer {
+  private readonly pendingInvokes: {
+    [transactionId: number]: {
+      reject(error: Error): void;
+      resolve(value: unknown): void;
     };
   } = {};
   private invokeCount = 0;
-  private readonly listeners: Record<string, EventTarget> = {};
 
   verbose = false;
 
-  invoke(channel: string, detail?: CustomEvent["detail"]): Promise<any> {
+  constructor() {
+    super();
+    window.addEventListener("message", this.onWindowMessage, true);
+  }
+
+  getMaxListeners(): number {
+    throw new Error("Not implemented");
+  }
+  setMaxListeners(max: number): this {
+    throw new Error("Not implemented");
+  }
+  rawListeners<K>(eventName: string | symbol): Function[] {
+    throw new Error("Not implemented");
+  }
+  prependListener<K>(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    throw new Error("Not implemented");
+  }
+  prependOnceListener<K>(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    throw new Error("Not implemented");
+  }
+
+  invoke(channel: string, ...args: any[]): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.verbose && console.log(`invoke("${channel}", ${detail}) 1`);
+      this.verbose && console.log(`invoke("${channel}", ...args) 1`);
       if (!isReactNativeWebViewWindow(window)) {
-        this.verbose && console.log(`invoke("${channel}", ${detail}) 2a`);
+        this.verbose && console.log(`invoke("${channel}", ...args) 2a`);
         return reject(
           new Error("Expected window.ReactNativeWebView to be populated, but got undefined."),
         );
       }
-      this.verbose && console.log(`invoke("${channel}", ${detail}) 2b`);
-
-      if (!Object.keys(this.invokers).length) {
-        this.verbose && console.log(`invoke("${channel}", ${detail}) 2c`);
-        window.addEventListener("message", this.lazyHandleInvokeResponse.bind(this), true);
-      }
+      this.verbose && console.log(`invoke("${channel}", ...args) 2b`);
 
       const transactionId = ++this.invokeCount;
-
-      let invokersForChannel: { [transactionId: number]: EventTarget };
-      let invoker: EventTarget;
-      if (!this.invokers[channel]) {
-        this.invokers[channel] = {};
-      }
-      invokersForChannel = this.invokers[channel];
-      if (!this.invokers[channel][transactionId]) {
-        this.invokers[channel][transactionId] = new EventTarget();
-      }
-      invoker = this.invokers[channel][transactionId];
-
-      let removeInvoker: () => void;
-      const onEvent = (event: Event) => {
-        // We're expecting this.lazyHandleInvokeResponse() to pass along the
-        // message from the WebView in this shape:
-        // {
-        //   type: "invoke-response",
-        //   detail: {
-        //     transactionId: 123,
-        //     subtype: "resolve",
-        //     value: 456,
-        //   },
-        // }
-        // {
-        //   type: "invoke-response",
-        //   detail: {
-        //     transactionId: 123,
-        //     subtype: "reject",
-        //     error: { message: string, stack?: string },
-        //   },
-        // }
-
-        if (!isInvokeResponseEvent(event)) {
-          return;
-        }
-
-        const { detail } = event;
-
-        this.verbose && console.log(`invoke("${channel}", <detail>) 4b`);
-
-        removeInvoker();
-
-        if (detail.subtype === "resolve") {
-          resolve(detail.value);
-        } else {
-          const { message, stack } = detail.error ?? { message: "<unserialisable>" };
-          const error = new Error(message);
-          if (error.stack) {
-            error.stack = stack;
-          }
-          reject(error);
-        }
-      };
-
-      this.verbose && console.log(`Added event listener to invoker "${channel}":${transactionId}`);
-      invoker.addEventListener("invoke-response", onEvent);
-
-      removeInvoker = () => {
-        this.verbose &&
-          console.log(`Removed event listener for invoker "${channel}":${transactionId}`);
-        invoker.removeEventListener(channel, onEvent);
-        delete invokersForChannel[transactionId];
-        if (!Object.keys(invokersForChannel).length) {
-          this.verbose && console.log(`[REMOVE] invoke("${channel}", <detail>) 7a`);
-          delete this.invokers[channel];
-        } else {
-          this.verbose && console.log(`[REMOVE] invoke("${channel}", <detail>) 7b`);
-        }
-      };
-
-      this.verbose && console.log(`invoke("${channel}", <detail>) 5`);
+      this.pendingInvokes[transactionId] = { resolve, reject };
+      this.verbose && console.log(`invoke("${channel}", ...args) 5`);
 
       let message: string;
       try {
@@ -115,15 +57,15 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
           type: "invoke-request",
           transactionId,
           channel,
-          detail,
+          args,
         });
-        this.verbose && console.log(`invoke("${channel}", <detail>) 6a`);
+        this.verbose && console.log(`invoke("${channel}", ...args) 6a`);
       } catch (cause) {
-        this.verbose && console.log(`invoke("${channel}", <detail>) 6b`);
-        removeInvoker();
+        this.verbose && console.log(`invoke("${channel}", ...args) 6b`);
+        delete this.pendingInvokes[transactionId];
         return reject(
           new Error(
-            "Unable to stringify IPC message. Make sure `detail` is a serialisable value.",
+            "Unable to stringify IPC message. Make sure the IPC arguments are serialisable values.",
             { cause },
           ),
         );
@@ -133,7 +75,7 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
     });
   }
 
-  private lazyHandleInvokeResponse({ data }: MessageEvent<any>): any {
+  private readonly onWindowMessage = ({ data }: MessageEvent<any>): any => {
     if (typeof data !== "string") {
       return;
     }
@@ -167,109 +109,49 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
     if (!isWebViewMessage(message)) {
       return;
     }
-    if (!isInvokeResponse(message)) {
+    if (isInvokeResponse(message)) {
+      const pendingInvoke = this.pendingInvokes[message.transactionId];
+
+      this.verbose &&
+        console.log(`[onWindowMessage] invoke "${message.channel}":${message.transactionId}`, {
+          message,
+          pendingInvoke,
+        });
+
+      if (!pendingInvoke) {
+        return;
+      }
+
+      delete this.pendingInvokes[message.transactionId];
+
+      if (message.subtype === "resolve") {
+        pendingInvoke.resolve(message.value);
+      } else {
+        const { message: errorMessage, stack } = message.error ?? { message: "<unserialisable>" };
+        const error = new Error(errorMessage);
+        if (stack) {
+          error.stack = stack;
+        }
+        pendingInvoke.reject(error);
+      }
       return;
     }
 
-    const { channel, transactionId } = message;
-    const invoker = this.invokers[channel]?.[transactionId];
-
-    this.verbose &&
-      console.log(`[lazyHandleInvokeResponse] "${channel}":${transactionId}`, {
-        message,
-        invoker,
-      });
-
-    invoker.dispatchEvent(
-      new CustomEvent(message.type, {
-        detail: {
-          transactionId,
-          ...(message.subtype === "resolve"
-            ? {
-                subtype: "resolve",
-                value: message.value,
-              }
-            : {
-                subtype: "reject",
-                error: message.error,
-              }),
-        },
-      }),
-    );
-  }
-
-  addEventListener(
-    type: string,
-    callback: ((event: CustomEvent<any>) => void) | EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions | undefined,
-  ): void {
-    if (!Object.keys(this.listeners)) {
-      window.addEventListener("message", this.lazyOnWindowMessage, true);
-    }
-
-    if (!this.listeners[type]) {
-      this.listeners[type] = new EventTarget();
-    }
-    this.listeners[type].addEventListener(
-      type,
-      callback as EventListenerOrEventListenerObject,
-      options,
-    );
-  }
-
-  removeEventListener(
-    type: string,
-    listener: ((event: CustomEvent) => void) | EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions,
-  ): void {
-    if (this.listeners[type]) {
-      this.listeners[type].removeEventListener(
-        type,
-        listener as EventListenerOrEventListenerObject,
-        options,
-      );
-      delete this.listeners[type];
-    }
-
-    if (!Object.keys(this.listeners)) {
-      window.removeEventListener("message", this.lazyOnWindowMessage, true);
-    }
-  }
-
-  private lazyOnWindowMessage({ data }: MessageEvent<any>): any {
-    if (typeof data !== "string") {
+    if (!isSendMessage(message)) {
       return;
     }
 
-    let message: unknown;
-    try {
-      message = JSON.parse(data);
-    } catch (error) {
-      return;
-    }
+    const args = Array.isArray(message.args) ? message.args : [];
+    this.emit(message.channel, new IpcRendererEventImpl(this), ...args);
+  };
 
-    if (
-      typeof message !== "object" ||
-      !message ||
-      !("channel" in message) ||
-      typeof message.channel !== "string"
-    ) {
-      return;
-    }
-
-    const { channel } = message;
-    const detail = "detail" in message ? message.detail : undefined;
-
-    this.listeners[channel]?.dispatchEvent(new CustomEvent(channel, { detail }));
-  }
-
-  send(channel: string, detail?: CustomEvent["detail"]): void {
+  send(channel: string, ...args: any[]): void {
     if (!isReactNativeWebViewWindow(window)) {
-      this.verbose && console.log(`send("${channel}", ${detail}) 1a`);
+      this.verbose && console.log(`send("${channel}", ...args) 1a`);
       throw new Error("Expected window.ReactNativeWebView to be populated, but got undefined.");
     }
 
-    this.verbose && console.log(`send("${channel}", <detail>) 1b`);
+    this.verbose && console.log(`send("${channel}", ...args) 1b`);
 
     let message: string;
     try {
@@ -277,13 +159,13 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
         namespace: "dubloon",
         type: "send",
         channel,
-        detail,
+        args,
       } satisfies SendMessage);
-      this.verbose && console.log(`send("${channel}", <detail>) 2a`);
+      this.verbose && console.log(`send("${channel}", ...args) 2a`);
     } catch (cause) {
-      this.verbose && console.log(`send("${channel}", <detail>) 2b`);
+      this.verbose && console.log(`send("${channel}", ...args) 2b`);
       throw new Error(
-        "Unable to stringify IPC message. Make sure `detail` is a serialisable value.",
+        "Unable to stringify IPC message. Make sure the IPC arguments are serialisable values.",
         { cause },
       );
     }

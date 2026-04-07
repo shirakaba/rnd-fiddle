@@ -22,7 +22,7 @@ export interface WebViewMessage {
 }
 
 export function isSendMessage(message: WebViewMessage): message is SendMessage {
-  if (message.type !== "send") {
+  if (message.type !== "send" || !("args" in message) || !Array.isArray(message.args)) {
     return false;
   }
 
@@ -31,12 +31,14 @@ export function isSendMessage(message: WebViewMessage): message is SendMessage {
 
 export interface SendMessage extends WebViewMessage {
   type: "send";
-  detail: unknown;
+  args: unknown[];
 }
 
 export function isInvokeRequest(message: WebViewMessage): message is InvokeRequest {
   if (
     message.type !== "invoke-request" ||
+    !("args" in message) ||
+    !Array.isArray(message.args) ||
     !("transactionId" in message) ||
     typeof message.transactionId !== "number"
   ) {
@@ -49,7 +51,7 @@ export function isInvokeRequest(message: WebViewMessage): message is InvokeReque
 export interface InvokeRequest extends WebViewMessage {
   type: "invoke-request";
   transactionId: number;
-  detail: unknown;
+  args: unknown[];
 }
 
 export function isInvokeResponse(message: WebViewMessage): message is InvokeResponse {
@@ -81,38 +83,3 @@ export type InvokeResponse =
       transactionId: number;
       value: unknown;
     });
-
-export function isInvokeResponseEvent(
-  event: Event,
-): event is CustomEvent<InvokeResponseEventDetail> {
-  if (!(event instanceof CustomEvent)) {
-    return false;
-  }
-
-  const { detail, type } = event as CustomEvent<unknown>;
-  if (
-    typeof detail !== "object" ||
-    !detail ||
-    type !== "invoke-response" ||
-    !("transactionId" in detail) ||
-    typeof detail.transactionId !== "number" ||
-    !("subtype" in detail) ||
-    (detail.subtype !== "reject" && detail.subtype !== "resolve")
-  ) {
-    return false;
-  }
-
-  return true;
-}
-
-export type InvokeResponseEventDetail =
-  | {
-      subtype: "reject";
-      transactionId: number;
-      error: { message: string; stack: string | undefined } | undefined;
-    }
-  | {
-      subtype: "resolve";
-      transactionId: number;
-      value: unknown;
-    };

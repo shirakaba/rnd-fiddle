@@ -1,31 +1,40 @@
-/// <reference lib="dom" />
-/// <reference path="../event-target-shim.d.ts" />
-
 import type { WebView, WebViewMessageEvent } from "react-native-webview";
 
-import { EventTarget } from "event-target-shim";
+import EventEmitter from "eventemitter3";
 
 import { isInvokeRequest, isSendMessage, isWebViewMessage, type InvokeResponse } from "../common";
-import { CustomEventImpl as CustomEvent } from "./custom-event";
+import { IpcMainEventImpl, IpcMainInvokeEventImpl } from "../common/ipc-event";
 
-class IpcMain extends EventTarget implements Dubloon.IpcMain {
+class IpcMain extends EventEmitter implements Dubloon.IpcMain {
   private readonly handlers: {
     [channel: string]: {
-      callback: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any;
+      callback: (event: Dubloon.IpcMainInvokeEvent, ...args: any[]) => Promise<any> | any;
       once: boolean;
     };
   } = {};
 
-  verbose = false;
-
-  addEventListener(
-    channel: string,
-    listener: ((event: Dubloon.IpcMainEvent) => void) | EventListenerOrEventListenerObject | null,
-  ): void {
-    super.addEventListener(channel, listener as EventListenerOrEventListenerObject);
+  getMaxListeners(): number {
+    throw new Error("Not implemented");
+  }
+  setMaxListeners(max: number): this {
+    throw new Error("Not implemented");
+  }
+  rawListeners<K>(eventName: string | symbol): Function[] {
+    throw new Error("Not implemented");
+  }
+  prependListener<K>(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    throw new Error("Not implemented");
+  }
+  prependOnceListener<K>(eventName: string | symbol, listener: (...args: any[]) => void): this {
+    throw new Error("Not implemented");
   }
 
-  handle(channel: string, listener: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any) {
+  verbose = false;
+
+  handle(
+    channel: string,
+    listener: (event: Dubloon.IpcMainInvokeEvent, ...args: any[]) => Promise<any> | any,
+  ) {
     this.handlers[channel] = { callback: listener, once: false };
   }
 
@@ -57,11 +66,10 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
       return;
     }
 
-    const detail = "detail" in message ? message.detail : undefined;
+    const args = "args" in message && Array.isArray(message.args) ? message.args : [];
 
     if (isSendMessage(message)) {
-      // The renderer is not awaiting any response.
-      this.dispatchEvent(new CustomEvent(message.channel, { detail }));
+      this.emit(message.channel, new IpcMainEventImpl(webView), ...args);
       return;
     }
 
@@ -94,7 +102,7 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
       (async () => {
         let result: unknown;
         try {
-          result = handler.callback(new IpcMainInvokeEvent("invoke-response", { detail }));
+          result = handler.callback(new IpcMainInvokeEventImpl(), ...args);
           if (result instanceof Promise) {
             result = await result;
           }
@@ -130,16 +138,10 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
       return;
     }
   }
+
+  removeHandler(channel: string): void {
+    delete this.handlers[channel];
+  }
 }
 
 export const ipcMain = new IpcMain();
-
-class IpcMainEvent<T = any> extends CustomEvent<T> {
-  type!: "frame";
-}
-Object.defineProperty(IpcMainEvent.prototype, "type", { value: "frame" });
-
-class IpcMainInvokeEvent<T = any> extends CustomEvent<T> {
-  type!: "frame";
-}
-Object.defineProperty(IpcMainInvokeEvent.prototype, "type", { value: "frame" });
