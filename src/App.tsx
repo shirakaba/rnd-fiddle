@@ -1,3 +1,4 @@
+/// <reference types="dubloon-electron-shim/main" />
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
 import { useEffect, useRef } from "react";
@@ -15,6 +16,9 @@ export default function App() {
 
   useEffect(() => {
     ipcMain.handle("ping", ({ detail }) => Date.now() - detail);
+    ipcMain.addEventListener("counter-value", ({ detail }) => {
+      console.log("counter-value", detail);
+    });
   }, []);
 
   return (

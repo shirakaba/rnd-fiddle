@@ -132,6 +132,8 @@ function App() {
       .catch((error) => {
         console.error(`ipcRenderer.invoke("ping") rejected`, error);
       });
+
+    ipcRenderer.send("counter-value", 1);
   }, []);
   const [files, setFiles] = useState<EditorFile[]>(() => buildInitialFiles());
   const [focusedEditor, setFocusedEditor] = useState<FileId>("App.js");

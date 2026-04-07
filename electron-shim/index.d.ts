@@ -41,6 +41,11 @@ declare namespace Dubloon {
       channel: string,
       listener: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any,
     ): void;
+
+    onWebViewMessage(
+      webView: import("react-native-webview").WebView | null,
+      { nativeEvent: { data } }: import("react-native-webview").WebViewMessageEvent,
+    ): void;
   }
 
   interface IpcMainEvent extends CustomEvent {

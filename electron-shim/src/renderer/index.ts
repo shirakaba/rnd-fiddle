@@ -1,6 +1,11 @@
 /// <reference lib="dom" />
 
-import { isInvokeResponse, isInvokeResponseEvent, isWebViewMessage } from "../common";
+import {
+  isInvokeResponse,
+  isInvokeResponseEvent,
+  isWebViewMessage,
+  type SendMessage,
+} from "../common";
 
 class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
   private readonly invokers: {
@@ -273,7 +278,7 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
         type: "send",
         channel,
         detail,
-      });
+      } satisfies SendMessage);
       this.verbose && console.log(`send("${channel}", <detail>) 2a`);
     } catch (cause) {
       this.verbose && console.log(`send("${channel}", <detail>) 2b`);

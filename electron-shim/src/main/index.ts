@@ -8,7 +8,6 @@ import { EventTarget } from "event-target-shim";
 import { isInvokeRequest, isSendMessage, isWebViewMessage, type InvokeResponse } from "../common";
 import { CustomEventImpl as CustomEvent } from "./custom-event";
 
-// WIP - currently non-functional
 class IpcMain extends EventTarget implements Dubloon.IpcMain {
   private readonly handlers: {
     [channel: string]: {
@@ -18,6 +17,24 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
   } = {};
 
   verbose = false;
+
+  addEventListener(
+    channel: string,
+    listener: ((event: Dubloon.IpcMainEvent) => void) | EventListenerOrEventListenerObject | null,
+  ): void {
+    super.addEventListener(channel, listener as EventListenerOrEventListenerObject);
+  }
+
+  handle(channel: string, listener: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any) {
+    this.handlers[channel] = { callback: listener, once: false };
+  }
+
+  handleOnce(
+    channel: string,
+    listener: (event: Dubloon.IpcMainInvokeEvent, ...args: any[]) => Promise<any> | any,
+  ): void {
+    this.handlers[channel] = { callback: listener, once: true };
+  }
 
   onWebViewMessage(webView: WebView | null, { nativeEvent: { data } }: WebViewMessageEvent) {
     console.log(`[IPC] Got message from web: ${data}`);
@@ -112,24 +129,6 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
 
       return;
     }
-  }
-
-  addEventListener(
-    channel: string,
-    listener: ((event: Dubloon.IpcMainEvent) => void) | EventListenerOrEventListenerObject | null,
-  ): void {
-    // TODO
-  }
-
-  handle(channel: string, listener: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any) {
-    this.handlers[channel] = { callback: listener, once: false };
-  }
-
-  handleOnce(
-    channel: string,
-    listener: (event: Dubloon.IpcMainInvokeEvent, ...args: any[]) => Promise<any> | any,
-  ): void {
-    this.handlers[channel] = { callback: listener, once: true };
   }
 }
 
