@@ -17,7 +17,7 @@
     }
   },
   "dependencies": {
-    "dom-events-wintercg": "^21.0.0"
+    "event-target-shim": "^6.0.2"
   },
   "devDependencies": {
     "electron": "^41.1.1",

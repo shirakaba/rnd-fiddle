@@ -1,10 +1,12 @@
 /// <reference lib="dom" />
-/// <reference path="../dom-events-wintercg.d.ts" />
+/// <reference path="../event-target-shim.d.ts" />
 
-import { CustomEvent, EventTarget } from "dom-events-wintercg";
-import { WebView, WebViewMessageEvent } from "react-native-webview";
+import type { WebView, WebViewMessageEvent } from "react-native-webview";
+
+import { EventTarget } from "event-target-shim";
 
 import { isInvokeRequest, isSendMessage, isWebViewMessage, type InvokeResponse } from "../common";
+import { CustomEventImpl as CustomEvent } from "./custom-event";
 
 // type Listener = Parameters<IpcMain["handle"]>[1];
 
