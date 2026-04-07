@@ -9,19 +9,21 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
   private invokeCount = 0;
   private readonly listeners: Record<string, EventTarget> = {};
 
+  verbose = false;
+
   invoke(channel: string, detail?: CustomEvent["detail"]): Promise<any> {
     return new Promise((resolve, reject) => {
-      console.log(`invoke("${channel}", ${detail}) 1`);
+      this.verbose && console.log(`invoke("${channel}", ${detail}) 1`);
       if (!isReactNativeWebViewWindow(window)) {
-        console.log(`invoke("${channel}", ${detail}) 2a`);
+        this.verbose && console.log(`invoke("${channel}", ${detail}) 2a`);
         return reject(
           new Error("Expected window.ReactNativeWebView to be populated, but got undefined."),
         );
       }
-      console.log(`invoke("${channel}", ${detail}) 2b`);
+      this.verbose && console.log(`invoke("${channel}", ${detail}) 2b`);
 
       if (!Object.keys(this.invokers).length) {
-        console.log(`invoke("${channel}", ${detail}) 2c`);
+        this.verbose && console.log(`invoke("${channel}", ${detail}) 2c`);
         window.addEventListener("message", this.lazyHandleInvokeResponse.bind(this), true);
       }
 
@@ -41,11 +43,11 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
       let removeInvoker: () => void;
       const onEvent = (event: Event) => {
         if (!(event instanceof CustomEvent)) {
-          console.log(`invoke("${channel}", <detail>) 3a`);
+          this.verbose && console.log(`invoke("${channel}", <detail>) 3a`);
           return;
         }
 
-        console.log(`invoke("${channel}", <detail>) 3b`);
+        this.verbose && console.log(`invoke("${channel}", <detail>) 3b`);
 
         // We're expecting this.lazyHandleInvokeResponse() to pass along the
         // message from the WebView in this shape:
@@ -64,11 +66,11 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
           !("transactionId" in detail) ||
           detail.transactionId !== transactionId
         ) {
-          console.log(`invoke("${channel}", <detail>) 4a`);
+          this.verbose && console.log(`invoke("${channel}", <detail>) 4a`);
           return;
         }
 
-        console.log(`invoke("${channel}", <detail>) 4b`);
+        this.verbose && console.log(`invoke("${channel}", <detail>) 4b`);
 
         const value = "value" in detail ? detail.value : undefined;
 
@@ -76,22 +78,23 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
         resolve(value);
       };
 
-      console.log(`Added event listener to invoker "${channel}":${transactionId}`);
+      this.verbose && console.log(`Added event listener to invoker "${channel}":${transactionId}`);
       invoker.addEventListener("invoke-response", onEvent);
 
       removeInvoker = () => {
-        console.log(`Removed event listener for invoker "${channel}":${transactionId}`);
+        this.verbose &&
+          console.log(`Removed event listener for invoker "${channel}":${transactionId}`);
         invoker.removeEventListener(channel, onEvent);
         delete invokersForChannel[transactionId];
         if (!Object.keys(invokersForChannel).length) {
-          console.log(`[REMOVE] invoke("${channel}", <detail>) 7a`);
+          this.verbose && console.log(`[REMOVE] invoke("${channel}", <detail>) 7a`);
           delete this.invokers[channel];
         } else {
-          console.log(`[REMOVE] invoke("${channel}", <detail>) 7b`);
+          this.verbose && console.log(`[REMOVE] invoke("${channel}", <detail>) 7b`);
         }
       };
 
-      console.log(`invoke("${channel}", <detail>) 5`);
+      this.verbose && console.log(`invoke("${channel}", <detail>) 5`);
 
       let message: string;
       try {
@@ -102,9 +105,9 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
           channel,
           detail,
         });
-        console.log(`invoke("${channel}", <detail>) 6a`);
+        this.verbose && console.log(`invoke("${channel}", <detail>) 6a`);
       } catch (cause) {
-        console.log(`invoke("${channel}", <detail>) 6b`);
+        this.verbose && console.log(`invoke("${channel}", <detail>) 6b`);
         removeInvoker();
         return reject(
           new Error(
@@ -156,10 +159,11 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
     const value = "detail" in message ? message.detail : undefined;
 
     const invoker = this.invokers[channel]?.[transactionId];
-    console.log(`[lazyHandleInvokeResponse] "${channel}":${transactionId}`, {
-      message,
-      invoker,
-    });
+    this.verbose &&
+      console.log(`[lazyHandleInvokeResponse] "${channel}":${transactionId}`, {
+        message,
+        invoker,
+      });
 
     invoker.dispatchEvent(
       new CustomEvent(message.type, {
