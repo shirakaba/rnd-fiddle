@@ -2,18 +2,12 @@ import type { WebView } from "react-native-webview";
 
 import { DubloonEvent } from "./event";
 
-export class IpcMainEventImpl extends DubloonEvent {
-  readonly frameId = 0;
-  readonly ports: [] = [];
-  readonly processId = 0;
-  returnValue: any = undefined;
-  readonly sender = null as never;
-  readonly senderFrame = null;
+export class IpcMainEventImpl extends DubloonEvent implements Dubloon.IpcMainEvent {
   readonly type = "frame";
   private readonly webView: WebView | null;
 
   constructor(webView: WebView | null) {
-    super("frame");
+    super();
     this.webView = webView;
   }
 
@@ -29,24 +23,15 @@ export class IpcMainEventImpl extends DubloonEvent {
   }
 }
 
-export class IpcMainInvokeEventImpl extends DubloonEvent {
-  readonly frameId = 0;
-  readonly processId = 0;
-  readonly sender = null as never;
-  readonly senderFrame = null;
+export class IpcMainInvokeEventImpl extends DubloonEvent implements Dubloon.IpcMainInvokeEvent {
   readonly type = "frame";
-
-  constructor() {
-    super("frame");
-  }
 }
 
-export class IpcRendererEventImpl extends DubloonEvent {
-  readonly ports: [] = [];
+export class IpcRendererEventImpl extends DubloonEvent implements Dubloon.IpcRendererEvent {
   readonly sender: any;
 
   constructor(sender: any) {
-    super("ipc-renderer");
+    super();
     this.sender = sender;
   }
 }

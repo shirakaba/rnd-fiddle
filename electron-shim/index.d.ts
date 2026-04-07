@@ -63,30 +63,44 @@ declare namespace Dubloon {
   interface IpcMainEvent extends Dubloon.Event {
     // Docs: https://electronjs.org/docs/api/structures/ipc-main-event
 
-    frameId: number;
-    ports: any[];
-    processId: number;
     reply: (channel: string, ...args: any[]) => void;
-    returnValue: any;
-    sender: any;
-    readonly senderFrame: null;
     /**
      * Possible values include `frame`
      */
     type: "frame";
+
+    // The ID of the renderer frame that sent this message.
+    // frameId: number;
+    // A list of MessagePorts that were transferred with this message.
+    // ports: MessagePortMain[];
+    // The internal ID of the renderer process that sent this message.
+    // processId: number;
+    // Set this to the value to be returned in a synchronous message.
+    // returnValue: any;
+    // Returns the `webContents` that sent the message.
+    // sender: WebContents;
+    // The frame that sent this message. May be `null` if accessed after the frame has
+    // either navigated or been destroyed.
+    // readonly senderFrame: WebFrameMain | null;
   }
 
   interface IpcMainInvokeEvent extends Dubloon.Event {
     // Docs: https://electronjs.org/docs/api/structures/ipc-main-invoke-event
 
-    frameId: number;
-    processId: number;
-    sender: any;
-    readonly senderFrame: null;
     /**
      * Possible values include `frame`
      */
     type: "frame";
+
+    // The ID of the renderer frame that sent this message.
+    // frameId: number;
+    // The internal ID of the renderer process that sent this message.
+    // processId: number;
+    // Returns the `webContents` that sent the message.
+    // sender: WebContents;
+    // The frame that sent this message. May be `null` if accessed after the frame has
+    // either navigated or been destroyed.
+    // readonly senderFrame: WebFrameMain | null;
   }
 
   interface IpcRenderer extends NodeJS.EventEmitter {
@@ -182,8 +196,10 @@ declare namespace Dubloon {
   }
 
   interface IpcRendererEvent extends Dubloon.Event {
-    ports: MessagePort[];
     sender: IpcRenderer;
+
+    // A list of MessagePorts that were transferred with this message.
+    // ports: MessagePort[];
   }
 
   namespace CrossProcessExports {
