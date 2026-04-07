@@ -239,6 +239,34 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
 
     this.listeners[channel]?.dispatchEvent(new CustomEvent(channel, { detail }));
   }
+
+  send(channel: string, detail?: CustomEvent["detail"]): void {
+    if (!isReactNativeWebViewWindow(window)) {
+      this.verbose && console.log(`send("${channel}", ${detail}) 1a`);
+      throw new Error("Expected window.ReactNativeWebView to be populated, but got undefined.");
+    }
+
+    this.verbose && console.log(`send("${channel}", <detail>) 1b`);
+
+    let message: string;
+    try {
+      message = JSON.stringify({
+        namespace: "dubloon",
+        type: "send",
+        channel,
+        detail,
+      });
+      this.verbose && console.log(`send("${channel}", <detail>) 2a`);
+    } catch (cause) {
+      this.verbose && console.log(`send("${channel}", <detail>) 2b`);
+      throw new Error(
+        "Unable to stringify IPC message. Make sure `detail` is a serialisable value.",
+        { cause },
+      );
+    }
+
+    window.ReactNativeWebView.postMessage(message);
+  }
 }
 
 function isReactNativeWebViewWindow(window: Window): window is ReactNativeWebViewWindow {
