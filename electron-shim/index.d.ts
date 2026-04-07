@@ -8,6 +8,11 @@ declare namespace Dubloon {
 
   interface IpcMain extends EventTarget {
     /**
+     * Alias for `ipcMain.on`.
+     */
+    addEventListener(channel: string, listener: (event: IpcMainEvent) => void): void;
+
+    /**
      * Adds a handler for an `invoke`able IPC. This handler will be called whenever a
      * renderer calls `ipcRenderer.invoke(channel, ...args)`.
      *
@@ -32,27 +37,69 @@ declare namespace Dubloon {
     handleOnce(channel: string, listener: (event: IpcMainInvokeEvent) => Promise<any> | any): void;
   }
 
-  interface IpcMainInvokeEvent extends CustomEvent {
-    // Docs: https://electronjs.org/docs/api/structures/ipc-main-invoke-event
+  interface IpcMainEvent extends CustomEvent {
+    // Docs: https://electronjs.org/docs/api/structures/ipc-main-event
 
+    // /**
+    //  * The ID of the renderer frame that sent this message
+    //  */
+    // frameId: number;
+    // /**
+    //  * A list of MessagePorts that were transferred with this message
+    //  */
+    // // ports: MessagePortMain[];
+    // /**
+    //  * The internal ID of the renderer process that sent this message
+    //  */
+    // processId: number;
+    // /**
+    //  * A function that will send an IPC message to the renderer frame that sent the
+    //  * original message that you are currently handling.  You should use this method to
+    //  * "reply" to the sent message in order to guarantee the reply will go to the
+    //  * correct process and frame.
+    //  */
+    // reply: (channel: string, ...args: any[]) => void;
+    // /**
+    //  * Set this to the value to be returned in a synchronous message
+    //  */
+    // returnValue: any;
+    // /**
+    //  * Returns the `webContents` that sent the message
+    //  */
+    // sender: WebContents;
+    // /**
+    //  * The frame that sent this message. May be `null` if accessed after the frame has
+    //  * either navigated or been destroyed.
+    //  *
+    //  */
+    // readonly senderFrame: WebFrameMain | null;
     /**
-     * The ID of the renderer frame that sent this message
+     * Possible values include `frame`
      */
-    frameId: number;
-    /**
-     * The internal ID of the renderer process that sent this message
-     */
-    processId: number;
-    /**
-     * Returns the `webContents` that sent the message
-     */
-    sender: WebContents;
-    /**
-     * The frame that sent this message. May be `null` if accessed after the frame has
-     * either navigated or been destroyed.
-     *
-     */
-    readonly senderFrame: /* WebFrameMain | */ null;
+    type: "frame";
+  }
+
+  interface IpcMainInvokeEvent extends CustomEvent {
+    // // Docs: https://electronjs.org/docs/api/structures/ipc-main-invoke-event
+
+    // /**
+    //  * The ID of the renderer frame that sent this message
+    //  */
+    // frameId: number;
+    // /**
+    //  * The internal ID of the renderer process that sent this message
+    //  */
+    // processId: number;
+    // /**
+    //  * Returns the `webContents` that sent the message
+    //  */
+    // sender: WebContents;
+    // /**
+    //  * The frame that sent this message. May be `null` if accessed after the frame has
+    //  * either navigated or been destroyed.
+    //  *
+    //  */
+    // readonly senderFrame: WebFrameMain | null;
     /**
      * Possible values include `frame`
      */

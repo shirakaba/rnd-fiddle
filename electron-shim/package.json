@@ -20,6 +20,10 @@
     "dom-events-wintercg": "^21.0.0"
   },
   "devDependencies": {
-    "electron": "^41.1.1"
+    "electron": "^41.1.1",
+    "react-native-webview": "catalog:"
+  },
+  "peerDependencies": {
+    "react-native-webview": "*"
   }
 }

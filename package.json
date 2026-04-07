@@ -28,7 +28,7 @@
     "react": "19.1.4",
     "react-native": "0.81.6",
     "react-native-macos": "0.81.2",
-    "react-native-webview": "^13.16.1"
+    "react-native-webview": "catalog:"
   },
   "devDependencies": {
     "@react-native-community/cli": "^20.1.1",
@@ -49,6 +49,7 @@
   "catalog": {
     "react": "19.1.4",
     "react-dom": "^19.0.0",
+    "react-native-webview": "^13.16.1",
     "@typescript/native-preview": "^7.0.0-dev.20260319.1"
   },
   "patchedDependencies": {
