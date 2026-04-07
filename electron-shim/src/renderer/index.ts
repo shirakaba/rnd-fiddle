@@ -21,7 +21,7 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
       console.log(`invoke("${channel}", ${detail}) 2b`);
 
       if (!Object.keys(this.invokers).length) {
-        console.log(`invoke("${channel}", ${detail}) 2c!!`);
+        console.log(`invoke("${channel}", ${detail}) 2c`);
         window.addEventListener("message", this.lazyHandleInvokeResponse.bind(this), true);
       }
 
@@ -75,18 +75,19 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
         removeInvoker();
         resolve(value);
       };
-      // FIXME: Currently we are listening via invoker.addListener(), but the
-      // actual event from the WebView is being fired at window as a "message"
-      // event.
-      invoker.addEventListener(channel, onEvent);
+
+      console.log(`Added event listener to invoker "${channel}":${transactionId}`);
+      invoker.addEventListener("invoke-response", onEvent);
+
       removeInvoker = () => {
+        console.log(`Removed event listener for invoker "${channel}":${transactionId}`);
         invoker.removeEventListener(channel, onEvent);
         delete invokersForChannel[transactionId];
         if (!Object.keys(invokersForChannel).length) {
-          console.log(`invoke("${channel}", <detail>) 7a`);
+          console.log(`[REMOVE] invoke("${channel}", <detail>) 7a`);
           delete this.invokers[channel];
         } else {
-          console.log(`invoke("${channel}", <detail>) 7b`);
+          console.log(`[REMOVE] invoke("${channel}", <detail>) 7b`);
         }
       };
 
@@ -129,8 +130,6 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
       return;
     }
 
-    console.log(`[lazyHandleInvokeResponse]`, message);
-
     // We're expecting the WebView to send us:
     // {
     //   namespace: "dubloon",
@@ -156,7 +155,13 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
     const { channel, transactionId } = message;
     const value = "detail" in message ? message.detail : undefined;
 
-    this.invokers[channel]?.[transactionId]?.dispatchEvent(
+    const invoker = this.invokers[channel]?.[transactionId];
+    console.log(`[lazyHandleInvokeResponse] "${channel}":${transactionId}`, {
+      message,
+      invoker,
+    });
+
+    invoker.dispatchEvent(
       new CustomEvent(message.type, {
         detail: {
           transactionId,
