@@ -10,7 +10,7 @@ declare namespace Dubloon {
     /**
      * Alias for `ipcMain.on`.
      */
-    addEventListener(channel: string, listener: (event: IpcMainEvent) => void): void;
+    addEventListener(channel: string, listener: (event: Dubloon.IpcMainEvent) => void): void;
 
     /**
      * Adds a handler for an `invoke`able IPC. This handler will be called whenever a
@@ -28,13 +28,19 @@ declare namespace Dubloon {
      * are serialized and only the `message` property from the original error is
      * provided to the renderer process. Please refer to #24427 for details.
      */
-    handle(channel: string, listener: (event: IpcMainInvokeEvent) => Promise<any> | any): void;
+    handle(
+      channel: string,
+      listener: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any,
+    ): void;
 
     /**
      * Handles a single `invoke`able IPC message, then removes the listener. See
      * `ipcMain.handle(channel, listener)`.
      */
-    handleOnce(channel: string, listener: (event: IpcMainInvokeEvent) => Promise<any> | any): void;
+    handleOnce(
+      channel: string,
+      listener: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any,
+    ): void;
   }
 
   interface IpcMainEvent extends CustomEvent {
@@ -79,7 +85,7 @@ declare namespace Dubloon {
     type: "frame";
   }
 
-  interface IpcMainInvokeEvent extends CustomEvent {
+  interface IpcMainInvokeEvent<T = any> extends CustomEvent<T> {
     // // Docs: https://electronjs.org/docs/api/structures/ipc-main-invoke-event
 
     // /**

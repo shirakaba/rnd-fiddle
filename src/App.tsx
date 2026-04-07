@@ -1,6 +1,6 @@
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { WebView } from "react-native-webview";
 
 /**
@@ -12,6 +12,10 @@ declare const __VITE_PORT: number;
 
 export default function App() {
   const ref = useRef<WebView>(null);
+
+  useEffect(() => {
+    ipcMain.handle("ping", ({ detail }) => Date.now() - detail);
+  }, []);
 
   return (
     <WebView

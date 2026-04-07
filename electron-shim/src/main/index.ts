@@ -8,14 +8,16 @@ import { EventTarget } from "event-target-shim";
 import { isInvokeRequest, isSendMessage, isWebViewMessage, type InvokeResponse } from "../common";
 import { CustomEventImpl as CustomEvent } from "./custom-event";
 
-// type Listener = Parameters<IpcMain["handle"]>[1];
-
 // WIP - currently non-functional
 class IpcMain extends EventTarget implements Dubloon.IpcMain {
-  // private readonly handles: Record<string, Listener> = {};
   private readonly handlers: {
-    [channel: string]: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any;
+    [channel: string]: {
+      callback: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any;
+      once: boolean;
+    };
   } = {};
+
+  verbose = false;
 
   onWebViewMessage(webView: WebView | null, { nativeEvent: { data } }: WebViewMessageEvent) {
     console.log(`[IPC] Got message from web: ${data}`);
@@ -42,16 +44,6 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
 
     if (isSendMessage(message)) {
       // The renderer is not awaiting any response.
-
-      // let response:
-      //   | {
-      //       namespace: "dubloon";
-      //       type: "send";
-      //       channel: string;
-      //       detail: unknown;
-      //     }
-      //   | undefined;
-
       this.dispatchEvent(new CustomEvent(message.channel, { detail }));
       return;
     }
@@ -61,11 +53,31 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
       const { transactionId, channel } = message;
 
       const handler = this.handlers[channel];
+      this.verbose && console.log(`!! Calling this.handlers["${channel}"]`, { handler, message });
+
+      if (!handler) {
+        const error = new Error(`No handler registered. Please call ipcMain.handle("${channel}")`);
+        webView.postMessage(
+          JSON.stringify({
+            namespace: "dubloon",
+            type: "invoke-response",
+            subtype: "reject",
+            transactionId,
+            channel,
+            error: { message: error.message, stack: error.stack },
+          } satisfies InvokeResponse & { subtype: "reject" }),
+        );
+        return;
+      }
+
+      if (handler.once) {
+        delete this.handlers[channel];
+      }
 
       (async () => {
         let result: unknown;
         try {
-          result = handler(new IpcMainInvokeEvent("invoke-response", { detail }));
+          result = handler.callback(new IpcMainInvokeEvent("invoke-response", { detail }));
           if (result instanceof Promise) {
             result = await result;
           }
@@ -98,47 +110,6 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
         );
       })();
 
-      let response:
-        | {
-            namespace: "dubloon";
-            type: "invoke-response";
-            transactionId: number;
-            channel: string;
-            detail: unknown;
-          }
-        | undefined;
-      if (channel === "ping") {
-        // Expecting to get an invoke-request with a transactionId:
-        // {
-        //   "namespace": "dubloon",
-        //   "type": "invoke-request",
-        //   "transactionId": 1,
-        //   "channel": "ping",
-        //   "detail": 1775434032913,
-        // }
-
-        if (typeof detail !== "number") {
-          return;
-        }
-        response = {
-          namespace: "dubloon",
-          type: "invoke-response",
-          transactionId,
-          channel,
-          detail: Date.now() - detail,
-        };
-      }
-
-      if (!response) {
-        return;
-      }
-
-      console.log("[IPC] sending back invoke-response...", response);
-
-      // I tried passing the response without stringification (like VS Code
-      // does with its messages) and sadly the message didn't make it to the
-      // other side. So it's a limitation of react-native-webview.
-      webView.postMessage(JSON.stringify(response));
       return;
     }
   }
@@ -151,19 +122,15 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
   }
 
   handle(channel: string, listener: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any) {
-    // this.handles[channel] = listener;
-    // this.addEventListener(channel, (event) => {
-    //   if (!(event instanceof CustomEvent)) {
-    //     return;
-    //   }
-    //   listener(event as Dubloon.IpcMainInvokeEvent);
-    // });
+    this.handlers[channel] = { callback: listener, once: false };
   }
 
   handleOnce(
     channel: string,
     listener: (event: Dubloon.IpcMainInvokeEvent, ...args: any[]) => Promise<any> | any,
-  ): void {}
+  ): void {
+    this.handlers[channel] = { callback: listener, once: true };
+  }
 }
 
 export const ipcMain = new IpcMain();
