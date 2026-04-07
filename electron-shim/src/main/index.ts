@@ -1,14 +1,19 @@
 /// <reference lib="dom" />
 /// <reference path="../dom-events-wintercg.d.ts" />
 
-import { EventTarget } from "dom-events-wintercg";
+import { CustomEvent, EventTarget } from "dom-events-wintercg";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
+
+import { isInvokeRequest, isSendMessage, isWebViewMessage, type InvokeResponse } from "../common";
 
 // type Listener = Parameters<IpcMain["handle"]>[1];
 
 // WIP - currently non-functional
 class IpcMain extends EventTarget implements Dubloon.IpcMain {
   // private readonly handles: Record<string, Listener> = {};
+  private readonly handlers: {
+    [channel: string]: (event: Dubloon.IpcMainInvokeEvent) => Promise<any> | any;
+  } = {};
 
   onWebViewMessage(webView: WebView | null, { nativeEvent: { data } }: WebViewMessageEvent) {
     console.log(`[IPC] Got message from web: ${data}`);
@@ -27,67 +32,113 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
 
     console.log("[IPC] parsed the incoming message.", message);
 
-    if (
-      typeof message !== "object" ||
-      !message ||
-      !("namespace" in message) ||
-      message.namespace !== "dubloon" ||
-      !("type" in message) ||
-      message.type !== "invoke-request" ||
-      !("channel" in message) ||
-      typeof message.channel !== "string" ||
-      !("transactionId" in message) ||
-      typeof message.transactionId !== "number"
-    ) {
+    if (!isWebViewMessage(message)) {
       return;
     }
 
-    const { transactionId, channel } = message;
     const detail = "detail" in message ? message.detail : undefined;
 
-    let response:
-      | {
-          namespace: "dubloon";
-          type: "invoke-response";
-          transactionId: number;
-          channel: string;
-          detail: unknown;
-        }
-      | undefined;
-    if (channel === "ping") {
-      // Expecting to get an invoke-request with a transactionId:
-      // {
-      //   "namespace": "dubloon",
-      //   "type": "invoke-request",
-      //   "transactionId": 1,
-      //   "channel": "ping",
-      //   "detail": 1775434032913,
-      // }
+    if (isSendMessage(message)) {
+      // The renderer is not awaiting any response.
 
-      if (typeof detail !== "number") {
-        return;
-      }
-      response = {
-        namespace: "dubloon",
-        type: "invoke-response",
-        transactionId,
-        channel,
-        detail: Date.now() - detail,
-      };
-    }
+      // let response:
+      //   | {
+      //       namespace: "dubloon";
+      //       type: "send";
+      //       channel: string;
+      //       detail: unknown;
+      //     }
+      //   | undefined;
 
-    if (!response) {
+      this.dispatchEvent(new CustomEvent(message.channel, { detail }));
       return;
     }
 
-    console.log("[IPC] sending back invoke-response...", response);
+    if (isInvokeRequest(message)) {
+      // We need to respond to the renderer with "invoke-response".
+      const { transactionId, channel } = message;
 
-    // I tried passing the response without stringification (like VS Code
-    // does with its messages) and sadly the message didn't make it to the
-    // other side. So it's a limitation of react-native-webview.
-    webView.postMessage(JSON.stringify(response));
+      const handler = this.handlers[channel];
 
-    // this.dispatchEvent("");
+      (async () => {
+        let result: unknown;
+        try {
+          result = handler(new IpcMainInvokeEvent("invoke-response", { detail }));
+          if (result instanceof Promise) {
+            result = await result;
+          }
+        } catch (error) {
+          const serialisedError =
+            error instanceof Error ? { message: error.message, stack: error.stack } : undefined;
+
+          webView.postMessage(
+            JSON.stringify({
+              namespace: "dubloon",
+              type: "invoke-response",
+              subtype: "reject",
+              transactionId,
+              channel,
+              error: serialisedError,
+            } satisfies InvokeResponse & { subtype: "reject" }),
+          );
+          return;
+        }
+
+        webView.postMessage(
+          JSON.stringify({
+            namespace: "dubloon",
+            type: "invoke-response",
+            subtype: "resolve",
+            transactionId,
+            channel,
+            value: result,
+          } satisfies InvokeResponse & { subtype: "resolve" }),
+        );
+      })();
+
+      let response:
+        | {
+            namespace: "dubloon";
+            type: "invoke-response";
+            transactionId: number;
+            channel: string;
+            detail: unknown;
+          }
+        | undefined;
+      if (channel === "ping") {
+        // Expecting to get an invoke-request with a transactionId:
+        // {
+        //   "namespace": "dubloon",
+        //   "type": "invoke-request",
+        //   "transactionId": 1,
+        //   "channel": "ping",
+        //   "detail": 1775434032913,
+        // }
+
+        if (typeof detail !== "number") {
+          return;
+        }
+        response = {
+          namespace: "dubloon",
+          type: "invoke-response",
+          transactionId,
+          channel,
+          detail: Date.now() - detail,
+        };
+      }
+
+      if (!response) {
+        return;
+      }
+
+      console.log("[IPC] sending back invoke-response...", response);
+
+      // I tried passing the response without stringification (like VS Code
+      // does with its messages) and sadly the message didn't make it to the
+      // other side. So it's a limitation of react-native-webview.
+      webView.postMessage(JSON.stringify(response));
+      return;
+    }
   }
 
   addEventListener(
@@ -114,3 +165,13 @@ class IpcMain extends EventTarget implements Dubloon.IpcMain {
 }
 
 export const ipcMain = new IpcMain();
+
+class IpcMainEvent<T = any> extends CustomEvent<T> {
+  type!: "frame";
+}
+Object.defineProperty(IpcMainEvent.prototype, "type", { value: "frame" });
+
+class IpcMainInvokeEvent<T = any> extends CustomEvent<T> {
+  type!: "frame";
+}
+Object.defineProperty(IpcMainInvokeEvent.prototype, "type", { value: "frame" });

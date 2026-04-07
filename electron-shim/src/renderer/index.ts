@@ -1,5 +1,7 @@
 /// <reference lib="dom" />
 
+import { isInvokeResponse, isInvokeResponseEvent, isWebViewMessage } from "../common";
+
 class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
   private readonly invokers: {
     [channel: string]: {
@@ -42,40 +44,45 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
 
       let removeInvoker: () => void;
       const onEvent = (event: Event) => {
-        if (!(event instanceof CustomEvent)) {
-          this.verbose && console.log(`invoke("${channel}", <detail>) 3a`);
-          return;
-        }
-
-        this.verbose && console.log(`invoke("${channel}", <detail>) 3b`);
-
         // We're expecting this.lazyHandleInvokeResponse() to pass along the
         // message from the WebView in this shape:
         // {
         //   type: "invoke-response",
         //   detail: {
         //     transactionId: 123,
+        //     subtype: "resolve",
         //     value: 456,
         //   },
         // }
-        const { detail, type } = event as CustomEvent<unknown>;
-        if (
-          typeof detail !== "object" ||
-          !detail ||
-          type !== "invoke-response" ||
-          !("transactionId" in detail) ||
-          detail.transactionId !== transactionId
-        ) {
-          this.verbose && console.log(`invoke("${channel}", <detail>) 4a`);
+        // {
+        //   type: "invoke-response",
+        //   detail: {
+        //     transactionId: 123,
+        //     subtype: "reject",
+        //     error: { message: string, stack?: string },
+        //   },
+        // }
+
+        if (!isInvokeResponseEvent(event)) {
           return;
         }
 
+        const { detail } = event;
+
         this.verbose && console.log(`invoke("${channel}", <detail>) 4b`);
 
-        const value = "value" in detail ? detail.value : undefined;
-
         removeInvoker();
-        resolve(value);
+
+        if (detail.subtype === "resolve") {
+          resolve(detail.value);
+        } else {
+          const { message, stack } = detail.error ?? { message: "<unserialisable>" };
+          const error = new Error(message);
+          if (error.stack) {
+            error.stack = stack;
+          }
+          reject(error);
+        }
       };
 
       this.verbose && console.log(`Added event listener to invoker "${channel}":${transactionId}`);
@@ -133,32 +140,35 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
       return;
     }
 
-    // We're expecting the WebView to send us:
+    // We're expecting the WebView to send us a resolution or a rejection:
     // {
     //   namespace: "dubloon",
     //   type: "invoke-response",
+    //   subtype: "resolve",
     //   transactionId: 123,
     //   channel: "ping",
-    //   detail: 456,
+    //   value: 456,
+    // }
+    //
+    // {
+    //   namespace: "dubloon",
+    //   type: "invoke-response",
+    //   subtype: "reject",
+    //   transactionId: 123,
+    //   channel: "ping",
+    //   error: { message: string; stack?: string },
     // }
 
-    if (
-      typeof message !== "object" ||
-      !message ||
-      !("type" in message) ||
-      message.type !== "invoke-response" ||
-      !("transactionId" in message) ||
-      typeof message.transactionId !== "number" ||
-      !("channel" in message) ||
-      typeof message.channel !== "string"
-    ) {
+    if (!isWebViewMessage(message)) {
+      return;
+    }
+    if (!isInvokeResponse(message)) {
       return;
     }
 
     const { channel, transactionId } = message;
-    const value = "detail" in message ? message.detail : undefined;
-
     const invoker = this.invokers[channel]?.[transactionId];
+
     this.verbose &&
       console.log(`[lazyHandleInvokeResponse] "${channel}":${transactionId}`, {
         message,
@@ -169,7 +179,15 @@ class IpcRenderer extends EventTarget implements Dubloon.IpcRenderer {
       new CustomEvent(message.type, {
         detail: {
           transactionId,
-          value,
+          ...(message.subtype === "resolve"
+            ? {
+                subtype: "resolve",
+                value: message.value,
+              }
+            : {
+                subtype: "reject",
+                error: message.error,
+              }),
         },
       }),
     );
