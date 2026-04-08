@@ -1,8 +1,10 @@
 /// <reference types="dubloon-electron-shim/main" />
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { WebView } from "react-native-webview";
+
+import { useIpcMain } from "./use-ipc-main";
 
 /**
  * Injected by babel.config.js based on the value of the VITE_PORT env var
@@ -14,12 +16,7 @@ declare const __VITE_PORT: number;
 export default function App() {
   const ref = useRef<WebView>(null);
 
-  useEffect(() => {
-    ipcMain.handle("ping", (_event, sentAt: number) => Date.now() - sentAt);
-    ipcMain.on("counter-value", (_event, value) => {
-      console.log("counter-value", value);
-    });
-  }, []);
+  useIpcMain();
 
   return (
     <WebView

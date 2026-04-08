@@ -11,7 +11,6 @@ import {
 } from "@blueprintjs/core";
 import Editor from "@monaco-editor/react";
 import classNames from "classnames";
-import { ipcRenderer } from "dubloon-electron-shim/renderer";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Mosaic,
@@ -34,6 +33,7 @@ import {
   type EditorFile,
   type FileId,
 } from "./lib/editorLayout";
+import { useIpcRenderer } from "./use-ipc-renderer";
 
 type WrapperEditorId = "output" | "editors" | "sidebar";
 type SidebarPaneId = "fileTree" | "packageManager";
@@ -122,19 +122,8 @@ function getEditorTitle(id: FileId) {
 }
 
 function App() {
-  useEffect(() => {
-    console.log(`Calling ipcRenderer.invoke("ping")...`);
-    ipcRenderer
-      .invoke("ping", Date.now())
-      .then((result) => {
-        console.log(`ipcRenderer.invoke("ping") resolved`, result);
-      })
-      .catch((error) => {
-        console.error(`ipcRenderer.invoke("ping") rejected`, error);
-      });
+  useIpcRenderer();
 
-    ipcRenderer.send("counter-value", 1);
-  }, []);
   const [files, setFiles] = useState<EditorFile[]>(() => buildInitialFiles());
   const [focusedEditor, setFocusedEditor] = useState<FileId>("App.js");
   const [maximizedEditor, setMaximizedEditor] = useState<FileId | null>(null);
