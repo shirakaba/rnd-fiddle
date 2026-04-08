@@ -5,13 +5,25 @@
   "files": [
     "ExpoChildProcessModule.js",
     "index.d.ts",
-    "index.js",
+    "index.ts",
+    "index.macos.ts",
+    "shared.ts",
     "expo-module.config.json",
     "ios"
   ],
-  "main": "index.js",
+  "main": "./index",
   "types": "index.d.ts",
-  "react-native": "index.js",
+  "react-native": "./index",
+  "exports": {
+    ".": {
+      "default": "./index",
+      "types": "./index.d.ts"
+    }
+  },
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "eventemitter3": "^5.0.4"
+  },
   "peerDependencies": {
     "expo": "*",
     "react-native": "*"

@@ -3,4 +3,5 @@ const { makeMetroConfig } = require("@rnx-kit/metro-config");
 
 const config = makeMetroConfig(getDefaultConfig(__dirname));
 config.resolver.useWatchman = false;
+config.resolver.platforms = [...(config.resolver.platforms ?? []), "macos"];
 module.exports = config;

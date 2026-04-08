@@ -87,6 +87,9 @@
     "packages/expo-child-process": {
       "name": "expo-child-process",
       "version": "1.0.0",
+      "dependencies": {
+        "eventemitter3": "^5.0.4",
+      },
       "peerDependencies": {
         "expo": "*",
         "react-native": "*",

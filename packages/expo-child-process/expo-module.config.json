@@ -1,6 +1,7 @@
 {
   "platforms": ["apple"],
   "apple": {
-    "modules": ["ExpoChildProcessModule"]
+    "modules": ["ExpoChildProcessModule"],
+    "podspecPath": "apple/ExpoChildProcess.podspec"
   }
 }

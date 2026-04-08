@@ -5,8 +5,8 @@ package = JSON.parse(File.read(File.join(__dir__, "..", "package.json")))
 Pod::Spec.new do |s|
   s.name = "ExpoChildProcess"
   s.version = package["version"]
-  s.summary = "A tiny local Expo child process module."
-  s.description = "A tiny local Expo child process module."
+  s.summary = "Expo module implementing Node.js child_process APIs on macOS."
+  s.description = "Expo module implementing Node.js child_process APIs on macOS."
   s.license = "MIT"
   s.author = "Codex"
   s.homepage = "https://example.com/expo-child-process"
