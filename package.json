@@ -1,43 +1,23 @@
 {
-  "name": "rndfiddle",
+  "name": "rndfiddle-monorepo",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
   "workspaces": [
-    "electron-shim",
-    "web"
+    "packages/electron-shim",
+    "apps/desktop",
+    "apps/web"
   ],
-  "main": "index.ts",
   "scripts": {
-    "start": "expo start",
     "dev": "sh ./scripts/dev-with-tmux.sh",
     "prepare": "husky",
     "lint-staged": "lint-staged",
     "format": "oxfmt",
     "typecheck": "bun run typecheck:native && bun run typecheck:web",
-    "typecheck:native": "tsgo --noEmit",
-    "typecheck:web": "bun run --cwd web typecheck",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "macos": "sh ./scripts/run-macos.sh"
-  },
-  "dependencies": {
-    "dubloon": "^0.0.4",
-    "dubloon-electron-shim": "workspace:",
-    "expo": "~54.0.33",
-    "expo-status-bar": "~3.0.9",
-    "react": "19.1.4",
-    "react-native": "0.81.6",
-    "react-native-macos": "0.81.2",
-    "react-native-webview": "catalog:"
+    "typecheck:desktop": "bun run --cwd apps/desktop typecheck",
+    "typecheck:web": "bun run --cwd apps/web typecheck"
   },
   "devDependencies": {
-    "@react-native-community/cli": "^20.1.1",
-    "@react-native/metro-config": "~0.81.0",
-    "@rnx-kit/metro-config": "^2.2.4",
-    "@types/react": "~19.1.0",
-    "@typescript/native-preview": "catalog:",
-    "babel-plugin-transform-define": "^2.1.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "oxfmt": "^0.41.0"
