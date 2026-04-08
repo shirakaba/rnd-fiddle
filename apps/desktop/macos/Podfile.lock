@@ -73,6 +73,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - ExpoModuleSmoke (1.0.0):
+    - ExpoModulesCore
   - fast_float (8.0.0)
   - FBLazyVector (0.81.2)
   - fmt (11.0.2)
@@ -2368,6 +2370,7 @@ DEPENDENCIES:
   - "ExpoFont (from `../../../node_modules/.bun/expo-font@14.0.11+e0830a2575043e0d/node_modules/expo-font/ios`)"
   - "ExpoKeepAwake (from `../../../node_modules/.bun/expo-keep-awake@15.0.8+4968621bbd67de62/node_modules/expo-keep-awake/ios`)"
   - "ExpoModulesCore (from `../../../node_modules/.bun/expo-modules-core@3.0.29+4fc874f04ead87df/node_modules/expo-modules-core`)"
+  - ExpoModuleSmoke (from `../../../packages/expo-module-smoke/ios`)
   - "fast_float (from `../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/third-party-podspecs/fast_float.podspec`)"
   - "FBLazyVector (from `../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/Libraries/FBLazyVector`)"
   - "fmt (from `../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/third-party-podspecs/fmt.podspec`)"
@@ -2466,6 +2469,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.bun/expo-keep-awake@15.0.8+4968621bbd67de62/node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
     :path: "../../../node_modules/.bun/expo-modules-core@3.0.29+4fc874f04ead87df/node_modules/expo-modules-core"
+  ExpoModuleSmoke:
+    :path: "../../../packages/expo-module-smoke/ios"
   fast_float:
     :podspec: "../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/third-party-podspecs/fast_float.podspec"
   FBLazyVector:
@@ -2619,6 +2624,7 @@ SPEC CHECKSUMS:
   ExpoFont: c625dbd97ed57e9089b172b2a7bb99003d074664
   ExpoKeepAwake: 44bf6715bc1d2ddb17afe19d927cd039cda123f0
   ExpoModulesCore: c740a66e579337893e953547429264fe386568ae
+  ExpoModuleSmoke: 1b3fb63b0b630b84b8a3bf44f7e38de97bd1398d
   fast_float: 20817c22759af6ac8d4d67e6e059b8b499953656
   FBLazyVector: 0e3076dbb16169b0afc2d701a24a526423b5e76b
   fmt: 24e7591456deb60b4a77518f83d9a916ac84223f

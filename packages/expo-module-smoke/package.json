@@ -1,0 +1,19 @@
+{
+  "name": "expo-module-smoke",
+  "version": "1.0.0",
+  "private": true,
+  "files": [
+    "ExpoModuleSmokeModule.js",
+    "index.d.ts",
+    "index.js",
+    "expo-module.config.json",
+    "ios"
+  ],
+  "main": "index.js",
+  "types": "index.d.ts",
+  "react-native": "index.js",
+  "peerDependencies": {
+    "expo": "*",
+    "react-native": "*"
+  }
+}

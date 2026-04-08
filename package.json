@@ -4,6 +4,7 @@
   "private": true,
   "license": "MIT",
   "workspaces": [
+    "packages/expo-module-smoke",
     "packages/electron-shim",
     "apps/desktop",
     "apps/web"
