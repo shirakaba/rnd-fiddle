@@ -2620,7 +2620,7 @@ SPEC CHECKSUMS:
   EXConstants: 3feb66fd1d94202fc1f0946d74e029d8b224b60e
   Expo: 8f20e31bd2c5a25e60261e248287cfecbcadc1c6
   ExpoAsset: d999f3bbd998a750f3b74cb913229848901b926b
-  ExpoChildProcess: af553d31d24c6cc15ac2cc037efe67dc09fa0a93
+  ExpoChildProcess: 06c04ab5c7d8c131ac162096833275d567165463
   ExpoFileSystem: aefcd337b94b874f88752ebefc52813b84992fad
   ExpoFont: c625dbd97ed57e9089b172b2a7bb99003d074664
   ExpoKeepAwake: 44bf6715bc1d2ddb17afe19d927cd039cda123f0
