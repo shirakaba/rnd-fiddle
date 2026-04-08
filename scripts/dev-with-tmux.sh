@@ -14,6 +14,7 @@ SESSION_NAME="rnd-fiddle-dev"
 TMUX_TMPDIR=${TMUX_TMPDIR:-/private/tmp}
 SOCKET_DIR="$TMUX_TMPDIR/tmux-$(id -u)"
 SOCKET_PATH="$SOCKET_DIR/$SOCKET_NAME"
+DEFAULT_SHELL=${SHELL:-/bin/zsh}
 
 case "$PORT_OFFSET" in
   ''|*[!0-9]*)
@@ -31,6 +32,16 @@ MACOS_COMMAND="node --run macos -- $MACOS_OFFSET"
 
 tmux_dev() {
   tmux -L "$SOCKET_NAME" "$@"
+}
+
+shell_command() {
+  command=$1
+  escaped_command=$(printf '%s' "$command" | sed "s/'/'\\\\''/g")
+  printf "%s\n" "$DEFAULT_SHELL -i -c '$escaped_command; exec $DEFAULT_SHELL -i'"
+}
+
+shell_only_command() {
+  printf "%s\n" "$DEFAULT_SHELL -i"
 }
 
 wait_for_shell() {
@@ -55,10 +66,10 @@ wait_for_shell() {
 
 start_pane_command() {
   target=$1
-  command=$2
+  pane_dir=$2
+  command=$3
 
-  wait_for_shell "$target"
-  tmux_dev send-keys -t "$target" "$command" C-m
+  tmux_dev respawn-pane -k -t "$target" -c "$pane_dir" "$(shell_command "$command")"
 }
 
 prefill_pane_command() {
@@ -67,6 +78,13 @@ prefill_pane_command() {
 
   wait_for_shell "$target"
   tmux_dev send-keys -t "$target" "$command"
+}
+
+start_shell_pane() {
+  target=$1
+  pane_dir=$2
+
+  tmux_dev respawn-pane -k -t "$target" -c "$pane_dir" "$(shell_only_command)"
 }
 
 if ! command -v tmux >/dev/null 2>&1; then
@@ -107,8 +125,9 @@ tmux_dev select-pane -t "$SESSION_NAME:$WINDOW_NAME.1" -T "Vite (port $VITE_PORT
 tmux_dev select-pane -t "$SESSION_NAME:$WINDOW_NAME.2" -T "Mac app (port $METRO_PORT)"
 tmux_dev select-pane -t "$SESSION_NAME:$WINDOW_NAME.0"
 
-start_pane_command "$SESSION_NAME:$WINDOW_NAME.0" "$METRO_COMMAND"
-start_pane_command "$SESSION_NAME:$WINDOW_NAME.1" "$VITE_COMMAND"
+start_pane_command "$SESSION_NAME:$WINDOW_NAME.0" "$DESKTOP_ROOT" "$METRO_COMMAND"
+start_pane_command "$SESSION_NAME:$WINDOW_NAME.1" "$WEB_ROOT" "$VITE_COMMAND"
+start_shell_pane "$SESSION_NAME:$WINDOW_NAME.2" "$DESKTOP_ROOT"
 prefill_pane_command "$SESSION_NAME:$WINDOW_NAME.2" "$MACOS_COMMAND"
 
 tmux_dev unbind-key -n m 2>/dev/null || true

@@ -3,6 +3,9 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+DESKTOP_ROOT="$REPO_ROOT/apps/desktop"
+WEB_ROOT="$REPO_ROOT/apps/web"
 WINDOW_NAME="dev"
 SOCKET_NAME=$1
 SESSION_NAME=$2
@@ -11,9 +14,16 @@ VITE_PORT=$4
 MACOS_OFFSET=$5
 ACTION=$6
 CURRENT_PANE_INDEX=$7
+DEFAULT_SHELL=${SHELL:-/bin/zsh}
 
 tmux_dev() {
   tmux -L "$SOCKET_NAME" "$@"
+}
+
+shell_command() {
+  command=$1
+  escaped_command=$(printf '%s' "$command" | sed "s/'/'\\\\''/g")
+  printf "%s\n" "$DEFAULT_SHELL -i -c '$escaped_command; exec $DEFAULT_SHELL -i'"
 }
 
 pane_target() {
@@ -68,6 +78,21 @@ pane_command() {
   printf '%s\n' "$command"
 }
 
+pane_dir() {
+  case "$1" in
+    0)
+      printf '%s\n' "$DESKTOP_ROOT"
+      ;;
+    1)
+      printf '%s\n' "$WEB_ROOT"
+      ;;
+    *)
+      echo "Unknown pane index: $1" >&2
+      exit 1
+      ;;
+  esac
+}
+
 wait_for_shell() {
   target=$1
   attempts=0
@@ -114,9 +139,7 @@ restart_pane() {
   target=$1
   pane_index=$2
 
-  interrupt_pane "$target"
-  wait_for_shell "$target"
-  tmux_dev send-keys -t "$target" "$(pane_command "$pane_index")" C-m
+  tmux_dev respawn-pane -k -t "$target" -c "$(pane_dir "$pane_index")" "$(shell_command "$(pane_command "$pane_index")")"
 }
 
 CURRENT_TARGET=$(pane_target "$CURRENT_PANE_INDEX")
@@ -150,12 +173,8 @@ case "$ACTION" in
     restart_pane "$CURRENT_TARGET" "$CURRENT_PANE_INDEX"
     ;;
   restart-both)
-    interrupt_pane "$METRO_TARGET"
-    interrupt_pane "$VITE_TARGET"
-    wait_for_shell "$METRO_TARGET"
-    wait_for_shell "$VITE_TARGET"
-    tmux_dev send-keys -t "$METRO_TARGET" "$(pane_command 0)" C-m
-    tmux_dev send-keys -t "$VITE_TARGET" "$(pane_command 1)" C-m
+    tmux_dev respawn-pane -k -t "$METRO_TARGET" -c "$(pane_dir 0)" "$(shell_command "$(pane_command 0)")"
+    tmux_dev respawn-pane -k -t "$VITE_TARGET" -c "$(pane_dir 1)" "$(shell_command "$(pane_command 1)")"
     ;;
   *)
     echo "Unknown action: $ACTION" >&2
