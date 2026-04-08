@@ -215,9 +215,9 @@ private enum ChildProcessError: Error, CustomStringConvertible {
 private func spawnProcess(_ config: [String: Any]) throws -> [String: Any] {
   let specification = try ProcessSpecification(config: config)
   let process = Process()
-  let stdinPipe = Pipe()
-  let stdoutPipe = Pipe()
-  let stderrPipe = Pipe()
+  let stdinPipe = specification.stdio[0] == "pipe" ? Pipe() : nil
+  let stdoutPipe = specification.stdio[1] == "pipe" ? Pipe() : nil
+  let stderrPipe = specification.stdio[2] == "pipe" ? Pipe() : nil
 
   process.executableURL = URL(fileURLWithPath: specification.executablePath)
   process.arguments = specification.arguments
@@ -225,39 +225,39 @@ private func spawnProcess(_ config: [String: Any]) throws -> [String: Any] {
   if let cwd = specification.cwd {
     process.currentDirectoryURL = URL(fileURLWithPath: cwd, isDirectory: true)
   }
-  process.standardInput = specification.stdio[0] == "pipe" ? stdinPipe : nil
-  process.standardOutput = specification.stdio[1] == "pipe" ? stdoutPipe : nil
-  process.standardError = specification.stdio[2] == "pipe" ? stderrPipe : nil
+  process.standardInput = standardInput(for: specification.stdio[0], pipe: stdinPipe)
+  process.standardOutput = standardOutput(for: specification.stdio[1], pipe: stdoutPipe)
+  process.standardError = standardError(for: specification.stdio[2], pipe: stderrPipe)
 
   let id = UUID().uuidString
-  let managed = ManagedChildProcess(
-    id: id,
-    process: process,
-    stdinPipe: specification.stdio[0] == "pipe" ? stdinPipe : nil
-  )
+  let managed = ManagedChildProcess(id: id, process: process, stdinPipe: stdinPipe)
 
-  stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-    let data = handle.availableData
-    if data.isEmpty {
-      handle.readabilityHandler = nil
-      return
+  stdoutPipe?.fileHandleForReading.readabilityHandler = { handle in
+    autoreleasepool {
+      let data = handle.availableData
+      if data.isEmpty {
+        handle.readabilityHandler = nil
+        return
+      }
+      managed.appendStdout(data)
     }
-    managed.appendStdout(data)
   }
-  stderrPipe.fileHandleForReading.readabilityHandler = { handle in
-    let data = handle.availableData
-    if data.isEmpty {
-      handle.readabilityHandler = nil
-      return
+  stderrPipe?.fileHandleForReading.readabilityHandler = { handle in
+    autoreleasepool {
+      let data = handle.availableData
+      if data.isEmpty {
+        handle.readabilityHandler = nil
+        return
+      }
+      managed.appendStderr(data)
     }
-    managed.appendStderr(data)
   }
 
   process.terminationHandler = { process in
     managed.markExited()
-    try? stdinPipe.fileHandleForWriting.close()
-    try? stdoutPipe.fileHandleForReading.close()
-    try? stderrPipe.fileHandleForReading.close()
+    try? stdinPipe?.fileHandleForWriting.close()
+    try? stdoutPipe?.fileHandleForReading.close()
+    try? stderrPipe?.fileHandleForReading.close()
     _ = process
   }
 
@@ -265,6 +265,10 @@ private func spawnProcess(_ config: [String: Any]) throws -> [String: Any] {
     try process.run()
   } catch {
     throw ChildProcessError.launchFailure("Failed to launch process: \(error)")
+  }
+
+  if specification.detached {
+    _ = setpgid(process.processIdentifier, process.processIdentifier)
   }
 
   ChildProcessRegistry.shared.insert(managed)
@@ -280,9 +284,9 @@ private func spawnProcess(_ config: [String: Any]) throws -> [String: Any] {
 private func spawnProcessSync(_ config: [String: Any]) throws -> [String: Any] {
   let specification = try ProcessSpecification(config: config)
   let process = Process()
-  let stdinPipe = Pipe()
-  let stdoutPipe = Pipe()
-  let stderrPipe = Pipe()
+  let stdinPipe = specification.stdio[0] == "pipe" ? Pipe() : nil
+  let stdoutPipe = specification.stdio[1] == "pipe" ? Pipe() : nil
+  let stderrPipe = specification.stdio[2] == "pipe" ? Pipe() : nil
   let stdoutData = NSMutableData()
   let stderrData = NSMutableData()
   let stdoutLock = NSLock()
@@ -294,29 +298,33 @@ private func spawnProcessSync(_ config: [String: Any]) throws -> [String: Any] {
   if let cwd = specification.cwd {
     process.currentDirectoryURL = URL(fileURLWithPath: cwd, isDirectory: true)
   }
-  process.standardInput = stdinPipe
-  process.standardOutput = stdoutPipe
-  process.standardError = stderrPipe
+  process.standardInput = standardInput(for: specification.stdio[0], pipe: stdinPipe)
+  process.standardOutput = standardOutput(for: specification.stdio[1], pipe: stdoutPipe)
+  process.standardError = standardError(for: specification.stdio[2], pipe: stderrPipe)
 
-  stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-    let data = handle.availableData
-    if data.isEmpty {
-      handle.readabilityHandler = nil
-      return
+  stdoutPipe?.fileHandleForReading.readabilityHandler = { handle in
+    autoreleasepool {
+      let data = handle.availableData
+      if data.isEmpty {
+        handle.readabilityHandler = nil
+        return
+      }
+      stdoutLock.lock()
+      stdoutData.append(data)
+      stdoutLock.unlock()
     }
-    stdoutLock.lock()
-    stdoutData.append(data)
-    stdoutLock.unlock()
   }
-  stderrPipe.fileHandleForReading.readabilityHandler = { handle in
-    let data = handle.availableData
-    if data.isEmpty {
-      handle.readabilityHandler = nil
-      return
+  stderrPipe?.fileHandleForReading.readabilityHandler = { handle in
+    autoreleasepool {
+      let data = handle.availableData
+      if data.isEmpty {
+        handle.readabilityHandler = nil
+        return
+      }
+      stderrLock.lock()
+      stderrData.append(data)
+      stderrLock.unlock()
     }
-    stderrLock.lock()
-    stderrData.append(data)
-    stderrLock.unlock()
   }
 
   do {
@@ -325,14 +333,20 @@ private func spawnProcessSync(_ config: [String: Any]) throws -> [String: Any] {
     throw ChildProcessError.launchFailure("Failed to launch process: \(error)")
   }
 
+  if specification.detached {
+    _ = setpgid(process.processIdentifier, process.processIdentifier)
+  }
+
   if let inputBase64 = config["inputBase64"] as? String,
-    let input = Data(base64Encoded: inputBase64)
+    let input = Data(base64Encoded: inputBase64),
+    let stdinPipe
   {
     stdinPipe.fileHandleForWriting.write(input)
   }
-  try stdinPipe.fileHandleForWriting.close()
+  try? stdinPipe?.fileHandleForWriting.close()
 
   let timeoutMs = config["timeoutMs"] as? Double
+  let killSignal = signalNumber(from: (config["killSignal"] as? String) ?? "SIGTERM")
   let semaphore = DispatchSemaphore(value: 0)
   DispatchQueue.global(qos: .userInitiated).async {
     process.waitUntilExit()
@@ -344,15 +358,15 @@ private func spawnProcessSync(_ config: [String: Any]) throws -> [String: Any] {
     let timeout = DispatchTime.now() + .milliseconds(Int(timeoutMs))
     if semaphore.wait(timeout: timeout) == .timedOut {
       timedOut = true
-      kill(process.processIdentifier, signalNumber(from: "SIGTERM"))
+      kill(process.processIdentifier, killSignal)
       _ = semaphore.wait(timeout: .now() + .milliseconds(250))
     }
   } else {
     semaphore.wait()
   }
 
-  stdoutPipe.fileHandleForReading.readabilityHandler = nil
-  stderrPipe.fileHandleForReading.readabilityHandler = nil
+  stdoutPipe?.fileHandleForReading.readabilityHandler = nil
+  stderrPipe?.fileHandleForReading.readabilityHandler = nil
 
   stdoutLock.lock()
   let finalStdout = Data(referencing: stdoutData)
@@ -378,6 +392,7 @@ private struct ProcessSpecification {
   let arguments: [String]
   let environment: [String: String]
   let cwd: String?
+  let detached: Bool
   let originalFile: String
   let originalArgs: [String]
   let stdio: [String]
@@ -391,11 +406,23 @@ private struct ProcessSpecification {
     let shellOption = config["shell"]
     let env = mergedEnvironment(from: config["env"] as? [String: Any])
     let cwd = config["cwd"] as? String
+    let detached = (config["detached"] as? Bool) ?? false
+    let uid = config["uid"]
+    let gid = config["gid"]
     let stdio = (config["stdio"] as? [String]) ?? ["pipe", "pipe", "pipe"]
+
+    if let uid, !(uid is NSNull) {
+      throw ChildProcessError.notImplemented("uid is not implemented on Apple yet")
+    }
+
+    if let gid, !(gid is NSNull) {
+      throw ChildProcessError.notImplemented("gid is not implemented on Apple yet")
+    }
 
     originalFile = file
     originalArgs = args
     self.cwd = cwd
+    self.detached = detached
     self.environment = env
     self.stdio = [
       stdio.count > 0 ? stdio[0] : "pipe",
@@ -404,18 +431,18 @@ private struct ProcessSpecification {
     ]
 
     if let shellString = shellOption as? String {
-      executablePath = shellString
+      executablePath = try resolveExecutable(shellString, env: env, cwd: cwd)
       arguments = ["-lc", shellCommand(file: file, args: args)]
       return
     }
 
     if (shellOption as? Bool) == true {
-      executablePath = env["SHELL"] ?? "/bin/sh"
+      executablePath = try resolveExecutable(env["SHELL"] ?? "/bin/sh", env: env, cwd: cwd)
       arguments = ["-lc", shellCommand(file: file, args: args)]
       return
     }
 
-    executablePath = try resolveExecutable(file, env: env)
+    executablePath = try resolveExecutable(file, env: env, cwd: cwd)
     arguments = args
   }
 }
@@ -428,9 +455,9 @@ private func mergedEnvironment(from values: [String: Any]?) -> [String: String] 
   return environment
 }
 
-private func resolveExecutable(_ file: String, env: [String: String]) throws -> String {
+private func resolveExecutable(_ file: String, env: [String: String], cwd: String?) throws -> String {
   if file.contains("/") {
-    return file
+    return absolutePath(for: file, cwd: cwd)
   }
 
   let pathEntries = (env["PATH"] ?? "").split(separator: ":")
@@ -442,6 +469,56 @@ private func resolveExecutable(_ file: String, env: [String: String]) throws -> 
   }
 
   throw ChildProcessError.launchFailure("Executable not found in PATH: \(file)")
+}
+
+private func absolutePath(for path: String, cwd: String?) -> String {
+  if path.hasPrefix("/") {
+    return path
+  }
+
+  let basePath = cwd ?? FileManager.default.currentDirectoryPath
+  return URL(fileURLWithPath: path, relativeTo: URL(fileURLWithPath: basePath, isDirectory: true))
+    .standardizedFileURL
+    .path
+}
+
+private func standardInput(for mode: String, pipe: Pipe?) -> Any? {
+  switch mode {
+  case "pipe":
+    return pipe
+  case "ignore":
+    return FileHandle.nullDevice
+  case "inherit":
+    return FileHandle.standardInput
+  default:
+    return pipe
+  }
+}
+
+private func standardOutput(for mode: String, pipe: Pipe?) -> Any? {
+  switch mode {
+  case "pipe":
+    return pipe
+  case "ignore":
+    return FileHandle.nullDevice
+  case "inherit":
+    return FileHandle.standardOutput
+  default:
+    return pipe
+  }
+}
+
+private func standardError(for mode: String, pipe: Pipe?) -> Any? {
+  switch mode {
+  case "pipe":
+    return pipe
+  case "ignore":
+    return FileHandle.nullDevice
+  case "inherit":
+    return FileHandle.standardError
+  default:
+    return pipe
+  }
 }
 
 private func shellCommand(file: String, args: [String]) -> String {

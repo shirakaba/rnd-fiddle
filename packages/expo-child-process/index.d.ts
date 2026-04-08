@@ -13,6 +13,7 @@ export interface CommonSpawnOptions {
   detached?: boolean;
   env?: Record<string, string>;
   gid?: number;
+  killSignal?: string | number;
   shell?: boolean | string;
   signal?: AbortSignal;
   stdio?: StdioValue | StdioValue[];

@@ -202,7 +202,7 @@ export class ChildProcess extends SimpleEventEmitter {
         const error = new Error(`Child process timed out after ${options.timeout}ms`);
         error.code = "ETIMEDOUT";
         this.emit("error", error);
-        this.kill("SIGTERM");
+        this.kill(options.killSignal ?? "SIGTERM");
       }, options.timeout);
     }
 
@@ -352,10 +352,13 @@ function buildSpawnConfig(file, args, options) {
     detached: Boolean(options.detached),
     env,
     file,
+    gid: options.gid ?? null,
     cwd: options.cwd ?? null,
+    killSignal: normalizeSignal(options.killSignal ?? "SIGTERM"),
     shell: options.shell ?? false,
     stdio: normalizeStdio(options.stdio),
     timeoutMs: options.timeout ?? null,
+    uid: options.uid ?? null,
   };
 }
 
