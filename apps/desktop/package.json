@@ -5,14 +5,14 @@
   "license": "MIT",
   "main": "index.ts",
   "scripts": {
-    "start": "expo start",
-    "dev": "sh ./scripts/dev-with-tmux.sh",
+    "start": "EXPO_NO_TYPESCRIPT_SETUP=1 expo start",
+    "dev": "sh ../../scripts/dev-with-tmux.sh",
     "prepare": "husky",
     "format": "oxfmt",
     "typecheck": "tsgo --noEmit",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "macos": "sh ./scripts/run-macos.sh"
+    "macos": "sh ../../scripts/run-macos.sh"
   },
   "dependencies": {
     "dubloon": "^0.0.4",
@@ -25,6 +25,7 @@
     "react-native-webview": "catalog:"
   },
   "devDependencies": {
+    "@expo/metro-config": "^54.0.14",
     "@react-native-community/cli": "^20.1.1",
     "@react-native/metro-config": "~0.81.0",
     "@rnx-kit/metro-config": "^2.2.4",

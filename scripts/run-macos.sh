@@ -4,7 +4,7 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 MONOREPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
-cd "$MONOREPO_ROOT/desktop"
+cd "$MONOREPO_ROOT/apps/desktop"
 
 PORT_OFFSET=${1:-0}
 
