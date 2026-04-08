@@ -1,7 +1,7 @@
 /// <reference types="dubloon-electron-shim/main" />
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
-import ExpoModuleSmoke from "expo-module-smoke";
+import ExpoChildProcess from "expo-child-process";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
@@ -23,13 +23,13 @@ export default function App() {
 
   useEffect(() => {
     try {
-      const message = ExpoModuleSmoke.getMessage();
+      const message = ExpoChildProcess.getMessage();
       setSmokeMessage(message);
-      console.log("[expo-module-smoke]", message);
+      console.log("[expo-child-process]", message);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setSmokeMessage(`Expo Module failed: ${message}`);
-      console.error("[expo-module-smoke]", error);
+      console.error("[expo-child-process]", error);
     }
   }, []);
 

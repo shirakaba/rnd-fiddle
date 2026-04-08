@@ -1,9 +1,9 @@
 {
-  "name": "expo-module-smoke",
+  "name": "expo-child-process",
   "version": "1.0.0",
   "private": true,
   "files": [
-    "ExpoModuleSmokeModule.js",
+    "ExpoChildProcessModule.js",
     "index.d.ts",
     "index.js",
     "expo-module.config.json",
