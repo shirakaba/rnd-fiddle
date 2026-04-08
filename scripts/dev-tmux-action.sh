@@ -54,7 +54,7 @@ pane_command() {
 
   case "$pane_index" in
     0)
-      command="node --run start -- --port $METRO_PORT"
+      command="EXPO_NO_TYPESCRIPT_SETUP=1 VITE_PORT=$VITE_PORT node --run start -- --port $METRO_PORT"
       ;;
     1)
       command="node --run start -- --port $VITE_PORT"

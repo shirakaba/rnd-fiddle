@@ -4,11 +4,16 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+DESKTOP_ROOT="$REPO_ROOT/apps/desktop"
+WEB_ROOT="$REPO_ROOT/apps/web"
 WINDOW_NAME="dev"
 ACTION_SCRIPT="$SCRIPT_DIR/dev-tmux-action.sh"
 PORT_OFFSET=${1:-0}
 SOCKET_NAME="rnd-fiddle-dev"
 SESSION_NAME="rnd-fiddle-dev"
+TMUX_TMPDIR=${TMUX_TMPDIR:-/private/tmp}
+SOCKET_DIR="$TMUX_TMPDIR/tmux-$(id -u)"
+SOCKET_PATH="$SOCKET_DIR/$SOCKET_NAME"
 
 case "$PORT_OFFSET" in
   ''|*[!0-9]*)
@@ -74,9 +79,14 @@ if tmux_dev has-session -t "$SESSION_NAME" 2>/dev/null; then
   exec env TMUX= tmux -L "$SOCKET_NAME" attach-session -t "$SESSION_NAME"
 fi
 
-tmux_dev new-session -d -s "$SESSION_NAME" -n "$WINDOW_NAME" -c "$REPO_ROOT"
-tmux_dev split-window -h -t "$SESSION_NAME:$WINDOW_NAME.0" -c "$REPO_ROOT/web"
-tmux_dev split-window -h -t "$SESSION_NAME:$WINDOW_NAME.1" -c "$REPO_ROOT"
+# A crashed tmux server can leave behind a dead socket that blocks future runs.
+if [ -S "$SOCKET_PATH" ]; then
+  rm -f "$SOCKET_PATH"
+fi
+
+tmux_dev new-session -d -s "$SESSION_NAME" -n "$WINDOW_NAME" -c "$DESKTOP_ROOT"
+tmux_dev split-window -h -t "$SESSION_NAME:$WINDOW_NAME.0" -c "$WEB_ROOT"
+tmux_dev split-window -h -t "$SESSION_NAME:$WINDOW_NAME.1" -c "$DESKTOP_ROOT"
 tmux_dev select-layout -t "$SESSION_NAME:$WINDOW_NAME" even-horizontal
 tmux_dev set-option -t "$SESSION_NAME" mouse on >/dev/null
 tmux_dev set-window-option -t "$SESSION_NAME:$WINDOW_NAME" remain-on-exit on >/dev/null
