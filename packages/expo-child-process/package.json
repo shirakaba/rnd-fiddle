@@ -4,10 +4,12 @@
   "private": true,
   "files": [
     "ExpoChildProcessModule.js",
+    "childProcess.js",
     "index.d.ts",
     "index.js",
     "expo-module.config.json",
-    "ios"
+    "apple",
+    "scripts"
   ],
   "main": "index.js",
   "types": "index.d.ts",

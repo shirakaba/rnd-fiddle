@@ -2366,7 +2366,7 @@ DEPENDENCIES:
   - "EXConstants (from `../../../node_modules/.bun/expo-constants@18.0.13+e0830a2575043e0d/node_modules/expo-constants/ios`)"
   - "Expo (from `../../../node_modules/.bun/expo@54.0.33+cb8a528db6c15090/node_modules/expo`)"
   - "ExpoAsset (from `../../../node_modules/.bun/expo-asset@12.0.12+e0830a2575043e0d/node_modules/expo-asset/ios`)"
-  - ExpoChildProcess (from `../../../packages/expo-child-process/ios`)
+  - ExpoChildProcess (from `../../../packages/expo-child-process/apple`)
   - "ExpoFileSystem (from `../../../node_modules/.bun/expo-file-system@19.0.21+e0830a2575043e0d/node_modules/expo-file-system/ios`)"
   - "ExpoFont (from `../../../node_modules/.bun/expo-font@14.0.11+e0830a2575043e0d/node_modules/expo-font/ios`)"
   - "ExpoKeepAwake (from `../../../node_modules/.bun/expo-keep-awake@15.0.8+4968621bbd67de62/node_modules/expo-keep-awake/ios`)"
@@ -2462,7 +2462,7 @@ EXTERNAL SOURCES:
   ExpoAsset:
     :path: "../../../node_modules/.bun/expo-asset@12.0.12+e0830a2575043e0d/node_modules/expo-asset/ios"
   ExpoChildProcess:
-    :path: "../../../packages/expo-child-process/ios"
+    :path: "../../../packages/expo-child-process/apple"
   ExpoFileSystem:
     :path: "../../../node_modules/.bun/expo-file-system@19.0.21+e0830a2575043e0d/node_modules/expo-file-system/ios"
   ExpoFont:
@@ -2620,7 +2620,7 @@ SPEC CHECKSUMS:
   EXConstants: 3feb66fd1d94202fc1f0946d74e029d8b224b60e
   Expo: 8f20e31bd2c5a25e60261e248287cfecbcadc1c6
   ExpoAsset: d999f3bbd998a750f3b74cb913229848901b926b
-  ExpoChildProcess: af553d31d24c6cc15ac2cc037efe67dc09fa0a93
+  ExpoChildProcess: f02595a4327e541fe667539e87f0b417f26e6e07
   ExpoFileSystem: aefcd337b94b874f88752ebefc52813b84992fad
   ExpoFont: c625dbd97ed57e9089b172b2a7bb99003d074664
   ExpoKeepAwake: 44bf6715bc1d2ddb17afe19d927cd039cda123f0

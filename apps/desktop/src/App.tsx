@@ -22,15 +22,42 @@ export default function App() {
   useIpcMain();
 
   useEffect(() => {
+    let didCancel = false;
+    let child: InstanceType<typeof ExpoChildProcess.ChildProcess> | null = null;
+
     try {
-      const message = ExpoChildProcess.getMessage();
-      setSmokeMessage(message);
-      console.log("[expo-child-process]", message);
+      const scriptPath = ExpoChildProcess.getTestScriptPath();
+      child = ExpoChildProcess.execFile(
+        scriptPath,
+        ["desktop-smoke"],
+        { encoding: "utf8" },
+        (error, stdout, stderr) => {
+          if (didCancel) {
+            return;
+          }
+
+          if (error) {
+            const message = error.message || String(error);
+            setSmokeMessage(`Child process failed: ${message}`);
+            console.error("[expo-child-process]", error, stderr);
+            return;
+          }
+
+          const output = typeof stdout === "string" ? stdout.trim() : String(stdout);
+          setSmokeMessage(output || ExpoChildProcess.getMessage());
+          console.log("[expo-child-process]", output || ExpoChildProcess.getMessage());
+        },
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setSmokeMessage(`Expo Module failed: ${message}`);
       console.error("[expo-child-process]", error);
     }
+
+    return () => {
+      didCancel = true;
+      child?.kill("SIGTERM");
+    };
   }, []);
 
   return (

@@ -5,8 +5,8 @@ package = JSON.parse(File.read(File.join(__dir__, "..", "package.json")))
 Pod::Spec.new do |s|
   s.name = "ExpoChildProcess"
   s.version = package["version"]
-  s.summary = "A tiny local Expo child process module."
-  s.description = "A tiny local Expo child process module."
+  s.summary = "Expo module that exposes child process APIs on Apple platforms."
+  s.description = "Expo module that exposes child process APIs on Apple platforms."
   s.license = "MIT"
   s.author = "Codex"
   s.homepage = "https://example.com/expo-child-process"
@@ -26,4 +26,5 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
+  s.resources = ["resources/*"]
 end
