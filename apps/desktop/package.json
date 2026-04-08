@@ -7,7 +7,7 @@
   "scripts": {
     "start": "EXPO_NO_TYPESCRIPT_SETUP=1 expo start",
     "dev": "sh ../../scripts/dev-with-tmux.sh",
-    "prepare": "husky",
+    "prepare": "sh ./scripts/prepare.sh",
     "format": "oxfmt",
     "typecheck": "tsgo --noEmit",
     "android": "expo run:android",
