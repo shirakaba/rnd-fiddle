@@ -13,36 +13,11 @@ import type { ExecFileSyncOptions, SpawnSyncOptions } from "./types";
 
 import { spawnSync } from "./spawnSync";
 
-export function execFileSync(file: string): NodeBuffer;
-export function execFileSync(file: string, args: readonly string[]): NodeBuffer;
-export function execFileSync(
-  file: string,
-  options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): NodeBuffer;
-export function execFileSync(
-  file: string,
-  options: ExecFileSyncOptions & { encoding: BufferEncoding },
-): string;
-export function execFileSync(
-  file: string,
-  args: readonly string[],
-  options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): NodeBuffer;
-export function execFileSync(
-  file: string,
-  args: readonly string[],
-  options: ExecFileSyncOptions & { encoding: BufferEncoding },
-): string;
-export function execFileSync(
+const execFileSyncImpl = (
   file: string,
   args?: readonly string[] | ExecFileSyncOptions,
   options?: ExecFileSyncOptions,
-): string | NodeBuffer;
-export function execFileSync(
-  file: string,
-  args?: readonly string[] | ExecFileSyncOptions,
-  options?: ExecFileSyncOptions,
-): string | NodeBuffer {
+): string | NodeBuffer => {
   let normalizedArgs: readonly string[];
   let opts: ExecFileSyncOptions;
 
@@ -84,4 +59,7 @@ export function execFileSync(
   }
 
   return ret.stdout;
-}
+};
+
+export const execFileSync: typeof import("child_process").execFileSync =
+  execFileSyncImpl as typeof import("child_process").execFileSync;

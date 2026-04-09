@@ -9,13 +9,7 @@
 import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
 import type { ChildProcess } from "./ChildProcess";
-import type {
-  ExecFileException,
-  ExecFileOptions,
-  ExecFileOptionsWithBufferEncoding,
-  ExecFileOptionsWithStringEncoding,
-  PromiseWithChild,
-} from "./types";
+import type { ExecFileException, ExecFileOptions, PromiseWithChild } from "./types";
 
 import { MAX_BUFFER } from "./constants";
 import { spawn } from "./spawn";
@@ -70,56 +64,12 @@ function normalizeExecFileArgs(
   };
 }
 
-// ── execFile ───────────────────────────────────────────────────────────────
-
-export function execFile(
-  file: string,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  options: ExecFileOptionsWithStringEncoding,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  options: ExecFileOptionsWithStringEncoding,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  options: ExecFileOptions | undefined | null,
-  callback?: ExecFileCallback | null,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  options: ExecFileOptions | undefined | null,
-  callback?: ExecFileCallback | null,
-): ChildProcess;
-export function execFile(
+const execFileImpl = (
   file: string,
   argsOrOptionsOrCallback?: any,
   optionsOrCallback?: any,
   callback?: ExecFileCallback,
-): ChildProcess {
+): ChildProcess => {
   const normalized = normalizeExecFileArgs(
     file,
     argsOrOptionsOrCallback,
@@ -255,7 +205,14 @@ export function execFile(
   child.addListener("error", errorHandler);
 
   return child;
-}
+};
+
+export const execFile = Object.assign(
+  execFileImpl as unknown as typeof import("child_process").execFile,
+  {
+    __promisify__: execFilePromisified as typeof import("child_process").execFile.__promisify__,
+  },
+);
 
 // ── execFile.__promisify__ ─────────────────────────────────────────────────
 
@@ -280,8 +237,6 @@ function execFilePromisified(
   );
   return promise as PromiseWithChild<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>;
 }
-
-(execFile as any).__promisify__ = execFilePromisified;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

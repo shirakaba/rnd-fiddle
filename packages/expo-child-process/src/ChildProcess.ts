@@ -2,24 +2,26 @@
  * ChildProcess class backed by the native Expo module.
  */
 
-import type {
-  ChildProcess as NodeChildProcess,
-  MessageOptions,
-  SendHandle,
-  Serializable,
-} from "child_process";
+import type { ChildProcess as NodeChildProcess } from "child_process";
 import type { Readable, Writable } from "stream";
 
-import type { NativeChildProcessEvent } from "./types";
+import { EventEmitter as ExpoEventEmitter } from "expo-modules-core";
 
 import { ChildReadable } from "./ChildReadable";
 import { ChildWritable } from "./ChildWritable";
-import {
-  NativeModule,
-  registerChildProcess,
-  unregisterChildProcess,
-} from "./ExpoChildProcessNative";
+import { nativeModule, type ChildProcessNativeEvent } from "./native";
 import { NodeEventEmitter } from "./NodeEventEmitter";
+
+const childProcessRegistry = new Map<string, ChildProcess>();
+const nativeEventEmitter = new ExpoEventEmitter(nativeModule as any);
+
+nativeEventEmitter.addListener("onChildProcessEvent", (value: unknown) => {
+  const event = parseNativeEvent(value);
+  if (!event) return;
+  const child = childProcessRegistry.get(event.id);
+  if (!child) return;
+  child._handleNativeEvent(event);
+});
 
 export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
   stdin: Writable | null = null;
@@ -85,7 +87,7 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
 
     const signalName = signal ?? "SIGTERM";
     try {
-      const didKill = NativeModule.kill(this._id, signalName);
+      const didKill = nativeModule.kill(this._id, signalName);
       if (didKill) this.killed = true;
       return didKill;
     } catch {
@@ -97,26 +99,9 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
     this.kill("SIGTERM");
   }
 
-  send(message: Serializable, callback?: (error: Error | null) => void): boolean;
-  send(
-    message: Serializable,
-    sendHandle?: SendHandle,
-    callback?: (error: Error | null) => void,
-  ): boolean;
-  send(
-    message: Serializable,
-    sendHandle?: SendHandle,
-    options?: MessageOptions,
-    callback?: (error: Error | null) => void,
-  ): boolean;
-  send(
-    _message: Serializable,
-    _sendHandle?: SendHandle | ((error: Error | null) => void),
-    _options?: MessageOptions | ((error: Error | null) => void),
-    _callback?: (error: Error | null) => void,
-  ): boolean {
+  send: NodeChildProcess["send"] = (() => {
     throw new Error("child_process.ChildProcess.send() is not implemented");
-  }
+  }) as NodeChildProcess["send"];
 
   disconnect(): void {
     throw new Error("child_process.ChildProcess.disconnect() is not implemented");
@@ -154,8 +139,8 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
     if (stdinMode === "pipe") {
       this.stdin = new ChildWritable(
         id,
-        NativeModule.writeToStdin.bind(NativeModule),
-        NativeModule.closeStdin.bind(NativeModule),
+        nativeModule.writeToStdin.bind(nativeModule),
+        nativeModule.closeStdin.bind(nativeModule),
         (err: Error) => this.emit("error", err),
       ) as unknown as Writable;
     }
@@ -181,7 +166,7 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
     stdio[1] = this.stdout;
     stdio[2] = this.stderr;
 
-    registerChildProcess(id, this);
+    childProcessRegistry.set(id, this);
   }
 
   /** @internal */
@@ -234,7 +219,7 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
   // ── Internal: called by native event router ──────────────────────────────
 
   /** @internal */
-  _handleNativeEvent(event: NativeChildProcessEvent): void {
+  _handleNativeEvent(event: ChildProcessNativeEvent): void {
     switch (event.type) {
       case "spawn":
         this.emit("spawn");
@@ -286,9 +271,27 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
       this._timeoutHandle = null;
     }
 
-    NativeModule.cleanup(this._id);
-    unregisterChildProcess(this._id);
+    nativeModule.cleanup(this._id);
+    childProcessRegistry.delete(this._id);
 
     this.emit("close", this.exitCode, this.signalCode);
   }
+}
+
+function parseNativeEvent(value: unknown): ChildProcessNativeEvent | null {
+  if (!value || typeof value !== "object") return null;
+  const event = value as Partial<ChildProcessNativeEvent>;
+  if (typeof event.id !== "string") return null;
+  if (
+    event.type !== "spawn" &&
+    event.type !== "stdout" &&
+    event.type !== "stderr" &&
+    event.type !== "stdoutEnd" &&
+    event.type !== "stderrEnd" &&
+    event.type !== "exit" &&
+    event.type !== "error"
+  ) {
+    return null;
+  }
+  return event as ChildProcessNativeEvent;
 }

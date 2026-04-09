@@ -7,13 +7,7 @@
  */
 
 import type { ChildProcess } from "./ChildProcess";
-import type {
-  ExecException,
-  ExecOptions,
-  ExecOptionsWithBufferEncoding,
-  ExecOptionsWithStringEncoding,
-  PromiseWithChild,
-} from "./types";
+import type { ExecException, ExecOptions, PromiseWithChild } from "./types";
 
 import { execFile } from "./execFile";
 
@@ -47,23 +41,7 @@ function normalizeExecArgs(
   return { file: command, options: opts, callback };
 }
 
-// ── exec ───────────────────────────────────────────────────────────────────
-
-export function exec(
-  command: string,
-  callback?: (error: ExecException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function exec(
-  command: string,
-  options: ExecOptionsWithBufferEncoding,
-  callback?: (error: ExecException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
-): ChildProcess;
-export function exec(
-  command: string,
-  options: ExecOptionsWithStringEncoding,
-  callback?: (error: ExecException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function exec(
+const execImpl = (
   command: string,
   options: ExecOptions | undefined | null,
   callback?: (
@@ -71,15 +49,25 @@ export function exec(
     stdout: string | NodeBuffer,
     stderr: string | NodeBuffer,
   ) => void,
-): ChildProcess;
-export function exec(
+): ChildProcess => {
+  return execFile(command, options, callback as ExecCallback | undefined) as ChildProcess;
+};
+
+const execImplNormalized = (
   command: string,
   optionsOrCallback?: ExecOptions | ExecCallback | null,
   callback?: ExecCallback,
-): ChildProcess {
+): ChildProcess => {
   const normalized = normalizeExecArgs(command, optionsOrCallback, callback);
-  return execFile(normalized.file, normalized.options, normalized.callback as any);
-}
+  return execImpl(normalized.file, normalized.options, normalized.callback);
+};
+
+export const exec = Object.assign(
+  execImplNormalized as unknown as typeof import("child_process").exec,
+  {
+    __promisify__: execPromisified as typeof import("child_process").exec.__promisify__,
+  },
+);
 
 // ── exec.__promisify__ ─────────────────────────────────────────────────────
 
@@ -100,5 +88,3 @@ function execPromisified(command: string, options?: ExecOptions | null) {
   );
   return promise as PromiseWithChild<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>;
 }
-
-(exec as any).__promisify__ = execPromisified;

@@ -5,35 +5,19 @@
 
 import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
-import type { NativeSpawnSyncConfig, SpawnSyncOptions, SpawnSyncReturns } from "./types";
+import type { SpawnSyncOptions, SpawnSyncReturns } from "./types";
 
 import { normalizeSignal } from "./constants";
-import { NativeModule } from "./ExpoChildProcessNative";
+import { nativeModule, type NativeSpawnSyncConfig } from "./native";
 import { normalizeSpawnArguments, normalizeStdio } from "./spawn";
 
 type NodeBuffer = import("buffer").Buffer;
 
-export function spawnSync(command: string): SpawnSyncReturns<NodeBuffer>;
-export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<NodeBuffer>;
-export function spawnSync(
-  command: string,
-  args: readonly string[],
-  options: SpawnSyncOptions & { encoding: BufferEncoding },
-): SpawnSyncReturns<string>;
-export function spawnSync(
-  command: string,
-  options: SpawnSyncOptions & { encoding: BufferEncoding },
-): SpawnSyncReturns<string>;
-export function spawnSync(
+const spawnSyncImpl = (
   command: string,
   args?: readonly string[] | SpawnSyncOptions,
   options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | NodeBuffer>;
-export function spawnSync(
-  command: string,
-  args?: readonly string[] | SpawnSyncOptions,
-  options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | NodeBuffer> {
+): SpawnSyncReturns<string | NodeBuffer> => {
   const normalized = normalizeSpawnArguments(command, args as any, options as any);
   const opts: SpawnSyncOptions = {
     maxBuffer: 1024 * 1024,
@@ -73,7 +57,7 @@ export function spawnSync(
     inputBase64,
   };
 
-  const result = NativeModule.spawnSync(config);
+  const result = nativeModule.spawnSync(config);
 
   const encoding = opts.encoding;
   const useBuffer = encoding === "buffer" || encoding === null || encoding === undefined;
@@ -95,7 +79,10 @@ export function spawnSync(
   }
 
   return ret;
-}
+};
+
+export const spawnSync: typeof import("child_process").spawnSync =
+  spawnSyncImpl as typeof import("child_process").spawnSync;
 
 type BufferEncoding = "utf8" | "utf-8" | "ascii" | "latin1" | "hex" | "base64";
 

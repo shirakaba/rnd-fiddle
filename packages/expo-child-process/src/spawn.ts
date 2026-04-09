@@ -3,16 +3,11 @@
  * https://github.com/nodejs/node/blob/main/lib/child_process.js
  */
 
-import type {
-  NativeSpawnConfig,
-  SpawnOptions,
-  SpawnOptionsWithoutStdio,
-  StdioOptions,
-} from "./types";
+import type { SpawnOptions, SpawnOptionsWithoutStdio, StdioOptions } from "./types";
 
 import { ChildProcess } from "./ChildProcess";
 import { normalizeSignal } from "./constants";
-import { NativeModule } from "./ExpoChildProcessNative";
+import { nativeModule, type NativeSpawnConfig } from "./native";
 
 // ── normalizeSpawnArguments ────────────────────────────────────────────────
 
@@ -125,11 +120,11 @@ export function buildNativeConfig(
 
 // ── spawn ──────────────────────────────────────────────────────────────────
 
-export function spawn(
+const spawnImpl = (
   command: string,
   args?: readonly string[] | SpawnOptionsWithoutStdio,
   options?: SpawnOptions,
-): ChildProcess {
+): ChildProcess => {
   const normalized = normalizeSpawnArguments(command, args, options);
   const opts = normalized.options;
 
@@ -160,7 +155,7 @@ export function spawn(
 
   let info;
   try {
-    info = NativeModule.spawn(config);
+    info = nativeModule.spawn(config);
   } catch (err: any) {
     // Emit error async, matching Node.js behavior
     queueMicrotask(() => {
@@ -181,4 +176,7 @@ export function spawn(
   }
 
   return child;
-}
+};
+
+export const spawn: typeof import("child_process").spawn =
+  spawnImpl as typeof import("child_process").spawn;

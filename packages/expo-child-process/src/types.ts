@@ -1,8 +1,7 @@
 /// <reference types="node" />
 
 /**
- * Public child_process typings come directly from Node's declarations so this
- * package stays aligned with the real API surface.
+ * Public typings come directly from Node's child_process declarations.
  */
 
 import type * as childProcess from "child_process";
@@ -66,47 +65,3 @@ export type ExecFileSyncOptionsWithStringEncoding =
   childProcess.ExecFileSyncOptionsWithStringEncoding;
 export type ExecFileSyncOptionsWithBufferEncoding =
   childProcess.ExecFileSyncOptionsWithBufferEncoding;
-
-export interface NativeChildProcessEvent {
-  id: string;
-  type: "stdout" | "stderr" | "stdoutEnd" | "stderrEnd" | "exit" | "error" | "spawn";
-  data?: string;
-  exitCode?: number | null;
-  signal?: string | null;
-  message?: string;
-}
-
-export interface NativeSpawnConfig {
-  file: string;
-  args: string[];
-  cwd: string | null;
-  env: Record<string, string> | null;
-  stdio: string[];
-  shell: boolean | string;
-  detached: boolean;
-  uid: number | null;
-  gid: number | null;
-  killSignal: string;
-  timeoutMs: number | null;
-}
-
-export interface NativeSpawnResult {
-  id: string;
-  pid: number;
-  spawnfile: string;
-  spawnargs: string[];
-}
-
-export interface NativeSpawnSyncResult {
-  pid: number;
-  status: number | null;
-  signal: string | null;
-  stdout: string;
-  stderr: string;
-  timedOut: boolean;
-  error?: string;
-}
-
-export interface NativeSpawnSyncConfig extends NativeSpawnConfig {
-  inputBase64: string | null;
-}

@@ -5,44 +5,33 @@
  * though the runtime implementation is only available on macOS.
  */
 
+import type { Buffer as NodeBuffer } from "buffer";
+import type { ChildProcess as NodeChildProcess } from "child_process";
 import type { Readable, Writable } from "stream";
 
 import type {
-  ChildProcess as NodeChildProcess,
-  ExecException,
-  ExecFileException,
   ExecFileOptions,
-  ExecFileOptionsWithBufferEncoding,
-  ExecFileOptionsWithStringEncoding,
   ExecOptions,
-  ExecOptionsWithBufferEncoding,
-  ExecOptionsWithStringEncoding,
   ExecSyncOptions,
   ExecFileSyncOptions,
   ForkOptions,
-  MessageOptions,
-  SendHandle,
-  Serializable,
   SpawnOptions,
   SpawnOptionsWithoutStdio,
   SpawnSyncOptions,
-  SpawnSyncReturns,
 } from "./types";
 
 import { NodeEventEmitter } from "./NodeEventEmitter";
-
-type NodeBuffer = import("buffer").Buffer;
 
 function notSupported(name: string): never {
   throw new Error(`child_process.${name}() is only supported on macOS`);
 }
 
 export class ChildReadable extends NodeEventEmitter {
-  readable: boolean = false;
+  readable = false;
   readableEncoding: string | null = null;
-  readableEnded: boolean = true;
+  readableEnded = true;
   readableFlowing: boolean | null = null;
-  destroyed: boolean = true;
+  destroyed = true;
 
   setEncoding(_encoding: BufferEncoding): this {
     return notSupported("Readable.setEncoding");
@@ -78,10 +67,10 @@ export class ChildReadable extends NodeEventEmitter {
 }
 
 export class ChildWritable extends NodeEventEmitter {
-  writable: boolean = false;
-  writableEnded: boolean = true;
-  writableFinished: boolean = true;
-  destroyed: boolean = true;
+  writable = false;
+  writableEnded = true;
+  writableFinished = true;
+  destroyed = true;
 
   write(_chunk: string | Uint8Array, _enc?: unknown, _cb?: unknown): boolean {
     return notSupported("Writable.write");
@@ -103,39 +92,21 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
   readonly stdio: NodeChildProcess["stdio"] = [null, null, null, undefined, undefined];
   readonly channel: NodeChildProcess["channel"] = undefined;
   pid: number | undefined = undefined;
-  readonly connected: boolean = false;
+  readonly connected = false;
   exitCode: number | null = null;
   signalCode: NodeJS.Signals | null = null;
   spawnargs: string[] = [];
-  spawnfile: string = "";
-  killed: boolean = false;
-
-  _id: string = "";
+  spawnfile = "";
+  killed = false;
+  _id = "";
 
   kill(_signal?: string | number): boolean {
     return notSupported("ChildProcess.kill");
   }
 
-  send(message: Serializable, callback?: (error: Error | null) => void): boolean;
-  send(
-    message: Serializable,
-    sendHandle?: SendHandle,
-    callback?: (error: Error | null) => void,
-  ): boolean;
-  send(
-    message: Serializable,
-    sendHandle?: SendHandle,
-    options?: MessageOptions,
-    callback?: (error: Error | null) => void,
-  ): boolean;
-  send(
-    _message: Serializable,
-    _sendHandle?: SendHandle | ((error: Error | null) => void),
-    _options?: MessageOptions | ((error: Error | null) => void),
-    _callback?: (error: Error | null) => void,
-  ): boolean {
-    return notSupported("ChildProcess.send");
-  }
+  send: NodeChildProcess["send"] = (() => {
+    throw new Error("child_process.ChildProcess.send() is not implemented");
+  }) as NodeChildProcess["send"];
 
   disconnect(): void {
     notSupported("ChildProcess.disconnect");
@@ -161,187 +132,79 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
   _setupAbortSignal(..._args: unknown[]): void {}
 }
 
-export function spawn(
-  command: string,
-  args?: readonly string[] | SpawnOptionsWithoutStdio,
-): ChildProcess;
-export function spawn(
-  command: string,
-  args?: readonly string[] | SpawnOptionsWithoutStdio,
-  options?: SpawnOptions,
-): ChildProcess;
-export function spawn(_command: string, _args?: unknown, _options?: unknown): ChildProcess {
-  return notSupported("spawn");
-}
-
-export function exec(
-  command: string,
-  callback?: (error: ExecException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function exec(
-  command: string,
-  options: ExecOptionsWithBufferEncoding,
-  callback?: (error: ExecException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
-): ChildProcess;
-export function exec(
-  command: string,
-  options: ExecOptionsWithStringEncoding,
-  callback?: (error: ExecException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function exec(
-  command: string,
-  options: ExecOptions | undefined | null,
-  callback?: (
-    error: ExecException | null,
-    stdout: string | NodeBuffer,
-    stderr: string | NodeBuffer,
-  ) => void,
-): ChildProcess;
-export function exec(_command: string, _options?: unknown, _callback?: unknown): ChildProcess {
-  return notSupported("exec");
-}
-
-export function execFile(
-  file: string,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  options: ExecFileOptionsWithStringEncoding,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  options: ExecFileOptionsWithStringEncoding,
-  callback?: (error: ExecFileException | null, stdout: string, stderr: string) => void,
-): ChildProcess;
-export function execFile(
-  file: string,
-  options: ExecFileOptions | undefined | null,
-  callback?:
-    | ((
-        error: ExecFileException | null,
-        stdout: string | NodeBuffer,
-        stderr: string | NodeBuffer,
-      ) => void)
-    | null,
-): ChildProcess;
-export function execFile(
-  file: string,
-  args: readonly string[] | undefined | null,
-  options: ExecFileOptions | undefined | null,
-  callback?:
-    | ((
-        error: ExecFileException | null,
-        stdout: string | NodeBuffer,
-        stderr: string | NodeBuffer,
-      ) => void)
-    | null,
-): ChildProcess;
-export function execFile(
-  _file: string,
-  _args?: unknown,
-  _options?: unknown,
-  _callback?: unknown,
-): ChildProcess {
-  return notSupported("execFile");
-}
-
-export function fork(
-  modulePath: string,
-  args?: readonly string[] | ForkOptions,
-  options?: ForkOptions,
-): ChildProcess {
-  return notSupported("fork");
-}
-
-export function spawnSync(command: string): SpawnSyncReturns<NodeBuffer>;
-export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<NodeBuffer>;
-export function spawnSync(
-  command: string,
-  args: readonly string[],
-  options: SpawnSyncOptions & { encoding: BufferEncoding },
-): SpawnSyncReturns<string>;
-export function spawnSync(
-  command: string,
-  options: SpawnSyncOptions & { encoding: BufferEncoding },
-): SpawnSyncReturns<string>;
-export function spawnSync(
-  command: string,
-  args?: readonly string[] | SpawnSyncOptions,
-  options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | NodeBuffer>;
-export function spawnSync(
+const spawnImpl = (
   _command: string,
-  _args?: unknown,
-  _options?: unknown,
-): SpawnSyncReturns<string | NodeBuffer> {
-  return notSupported("spawnSync");
-}
+  _args?: readonly string[] | SpawnOptionsWithoutStdio,
+  _options?: SpawnOptions,
+): ChildProcess => notSupported("spawn");
 
-export function execSync(command: string): NodeBuffer;
-export function execSync(
-  command: string,
-  options: ExecSyncOptions & { encoding: "buffer" | null },
-): NodeBuffer;
-export function execSync(
-  command: string,
-  options: ExecSyncOptions & { encoding: BufferEncoding },
-): string;
-export function execSync(command: string, options?: ExecSyncOptions): string | NodeBuffer;
-export function execSync(_command: string, _options?: unknown): string | NodeBuffer {
-  return notSupported("execSync");
-}
+export const spawn: typeof import("child_process").spawn =
+  spawnImpl as unknown as typeof import("child_process").spawn;
 
-export function execFileSync(file: string): NodeBuffer;
-export function execFileSync(file: string, args: readonly string[]): NodeBuffer;
-export function execFileSync(
-  file: string,
-  options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): NodeBuffer;
-export function execFileSync(
-  file: string,
-  options: ExecFileSyncOptions & { encoding: BufferEncoding },
-): string;
-export function execFileSync(
-  file: string,
-  args: readonly string[],
-  options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): NodeBuffer;
-export function execFileSync(
-  file: string,
-  args: readonly string[],
-  options: ExecFileSyncOptions & { encoding: BufferEncoding },
-): string;
-export function execFileSync(
-  file: string,
-  args?: readonly string[] | ExecFileSyncOptions,
-  options?: ExecFileSyncOptions,
-): string | NodeBuffer;
-export function execFileSync(
+const execImpl = (
+  _command: string,
+  _optionsOrCallback?: ExecOptions | ((...args: any[]) => void) | null,
+  _callback?: (...args: any[]) => void,
+): ChildProcess => notSupported("exec");
+
+export const exec = Object.assign(execImpl as unknown as typeof import("child_process").exec, {
+  __promisify__: (() => {
+    return notSupported("exec");
+  }) as typeof import("child_process").exec.__promisify__,
+});
+
+const execFileImpl = (
   _file: string,
-  _args?: unknown,
-  _options?: unknown,
-): string | NodeBuffer {
-  return notSupported("execFileSync");
-}
+  _argsOrOptionsOrCallback?:
+    | readonly string[]
+    | ExecFileOptions
+    | ((...args: any[]) => void)
+    | null,
+  _optionsOrCallback?: ExecFileOptions | ((...args: any[]) => void) | null,
+  _callback?: (...args: any[]) => void,
+): ChildProcess => notSupported("execFile");
+
+export const execFile = Object.assign(
+  execFileImpl as unknown as typeof import("child_process").execFile,
+  {
+    __promisify__: (() => {
+      return notSupported("execFile");
+    }) as typeof import("child_process").execFile.__promisify__,
+  },
+);
+
+const forkImpl = (
+  _modulePath: string,
+  _args?: readonly string[] | ForkOptions,
+  _options?: ForkOptions,
+): ChildProcess => notSupported("fork");
+
+export const fork: typeof import("child_process").fork =
+  forkImpl as unknown as typeof import("child_process").fork;
+
+const spawnSyncImpl = (
+  _command: string,
+  _args?: readonly string[] | SpawnSyncOptions,
+  _options?: SpawnSyncOptions,
+): import("child_process").SpawnSyncReturns<string | NodeBuffer> => notSupported("spawnSync");
+
+export const spawnSync: typeof import("child_process").spawnSync =
+  spawnSyncImpl as unknown as typeof import("child_process").spawnSync;
+
+const execSyncImpl = (_command: string, _options?: ExecSyncOptions): string | NodeBuffer =>
+  notSupported("execSync");
+
+export const execSync: typeof import("child_process").execSync =
+  execSyncImpl as unknown as typeof import("child_process").execSync;
+
+const execFileSyncImpl = (
+  _file: string,
+  _args?: readonly string[] | ExecFileSyncOptions,
+  _options?: ExecFileSyncOptions,
+): string | NodeBuffer => notSupported("execFileSync");
+
+export const execFileSync: typeof import("child_process").execFileSync =
+  execFileSyncImpl as unknown as typeof import("child_process").execFileSync;
 
 export type {
   ChildProcess as NodeChildProcess,

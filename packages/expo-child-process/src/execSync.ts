@@ -13,17 +13,7 @@ import type { ExecSyncOptions } from "./types";
 
 import { spawnSync } from "./spawnSync";
 
-export function execSync(command: string): NodeBuffer;
-export function execSync(
-  command: string,
-  options: ExecSyncOptions & { encoding: "buffer" | null },
-): NodeBuffer;
-export function execSync(
-  command: string,
-  options: ExecSyncOptions & { encoding: BufferEncoding },
-): string;
-export function execSync(command: string, options?: ExecSyncOptions): string | NodeBuffer;
-export function execSync(command: string, options?: ExecSyncOptions): string | NodeBuffer {
+const execSyncImpl = (command: string, options?: ExecSyncOptions): string | NodeBuffer => {
   const opts = {
     ...options,
     shell: typeof options?.shell === "string" ? options.shell : true,
@@ -52,4 +42,7 @@ export function execSync(command: string, options?: ExecSyncOptions): string | N
   }
 
   return ret.stdout;
-}
+};
+
+export const execSync: typeof import("child_process").execSync =
+  execSyncImpl as typeof import("child_process").execSync;

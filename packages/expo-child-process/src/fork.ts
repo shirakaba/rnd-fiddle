@@ -25,11 +25,11 @@ function stdioStringToArray(stdio: string, channel: "ignore"): StdioOptions {
   }
 }
 
-export function fork(
+const forkImpl = (
   modulePath: string,
   args?: readonly string[] | ForkOptions,
   options?: ForkOptions,
-): ChildProcess {
+): ChildProcess => {
   let normalizedArgs: string[];
   if (Array.isArray(args)) {
     normalizedArgs = args.slice();
@@ -61,4 +61,7 @@ export function fork(
     ...opts,
     stdio,
   });
-}
+};
+
+export const fork: typeof import("child_process").fork =
+  forkImpl as typeof import("child_process").fork;
