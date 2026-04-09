@@ -6,7 +6,7 @@
  * Buffers stdout/stderr and invokes the callback when the child exits.
  */
 
-import { Buffer as RuntimeBuffer } from "react-native-buffer";
+import { Buffer as RuntimeBuffer } from "buffer";
 
 import type { ExecFileException, ExecFileOptions, PromiseWithChild } from "./types";
 

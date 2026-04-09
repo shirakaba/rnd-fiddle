@@ -15,7 +15,7 @@
  * breaking changes.
  */
 
-import { Buffer as RuntimeBuffer } from "react-native-buffer";
+import { Buffer as RuntimeBuffer } from "buffer";
 
 import { NodeEventEmitter } from "./NodeEventEmitter";
 

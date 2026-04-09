@@ -28,8 +28,7 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
-    "eventemitter3": "^5.0.4",
-    "react-native-buffer": "^6.0.4"
+    "eventemitter3": "^5.0.4"
   },
   "devDependencies": {
     "react-native": "catalog:"

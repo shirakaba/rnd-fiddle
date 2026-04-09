@@ -7,7 +7,7 @@
 
 import type { Buffer as NodeBuffer } from "buffer";
 
-import { Buffer as RuntimeBuffer } from "react-native-buffer";
+import { Buffer as RuntimeBuffer } from "buffer";
 
 import { spawnSync } from "./spawnSync";
 

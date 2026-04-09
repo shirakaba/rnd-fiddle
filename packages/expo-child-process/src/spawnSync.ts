@@ -3,7 +3,7 @@
  * https://github.com/nodejs/node/blob/main/lib/child_process.js
  */
 
-import { Buffer as RuntimeBuffer } from "react-native-buffer";
+import { Buffer as RuntimeBuffer } from "buffer";
 
 import type { SpawnSyncOptions, SpawnSyncReturns } from "./types";
 
