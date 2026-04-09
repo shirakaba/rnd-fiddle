@@ -6,8 +6,6 @@
  * Node.js does.
  */
 
-import { Buffer } from "buffer";
-
 import type { ChildProcess } from "./ChildProcess";
 import type {
   ExecException,
@@ -19,10 +17,12 @@ import type {
 
 import { execFile } from "./execFile";
 
+type NodeBuffer = import("buffer").Buffer;
+
 type ExecCallback = (
   error: ExecException | null,
-  stdout: string | Buffer,
-  stderr: string | Buffer,
+  stdout: string | NodeBuffer,
+  stderr: string | NodeBuffer,
 ) => void;
 
 // ── normalizeExecArgs ──────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ export function exec(
 export function exec(
   command: string,
   options: ExecOptionsWithBufferEncoding,
-  callback?: (error: ExecException | null, stdout: Buffer, stderr: Buffer) => void,
+  callback?: (error: ExecException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
 ): ChildProcess;
 export function exec(
   command: string,
@@ -68,8 +68,8 @@ export function exec(
   options: ExecOptions | undefined | null,
   callback?: (
     error: ExecException | null,
-    stdout: string | Buffer,
-    stderr: string | Buffer,
+    stdout: string | NodeBuffer,
+    stderr: string | NodeBuffer,
   ) => void,
 ): ChildProcess;
 export function exec(
@@ -84,7 +84,7 @@ export function exec(
 // ── exec.__promisify__ ─────────────────────────────────────────────────────
 
 function execPromisified(command: string, options?: ExecOptions | null) {
-  const promise = new Promise<{ stdout: string | Buffer; stderr: string | Buffer }>(
+  const promise = new Promise<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>(
     (resolve, reject) => {
       const child = exec(command, options ?? {}, (err, stdout, stderr) => {
         if (err) {
@@ -98,7 +98,7 @@ function execPromisified(command: string, options?: ExecOptions | null) {
       (promise as any).child = child;
     },
   );
-  return promise as PromiseWithChild<{ stdout: string | Buffer; stderr: string | Buffer }>;
+  return promise as PromiseWithChild<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>;
 }
 
 (exec as any).__promisify__ = execPromisified;

@@ -6,7 +6,7 @@
  * Buffers stdout/stderr and invokes the callback when the child exits.
  */
 
-import { Buffer } from "buffer";
+import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
 import type { ChildProcess } from "./ChildProcess";
 import type {
@@ -20,10 +20,12 @@ import type {
 import { MAX_BUFFER } from "./constants";
 import { spawn } from "./spawn";
 
+type NodeBuffer = import("buffer").Buffer;
+
 type ExecFileCallback = (
   error: ExecFileException | null,
-  stdout: string | Buffer,
-  stderr: string | Buffer,
+  stdout: string | NodeBuffer,
+  stderr: string | NodeBuffer,
 ) => void;
 
 // ── normalizeExecFileArgs ──────────────────────────────────────────────────
@@ -82,13 +84,13 @@ export function execFile(
 export function execFile(
   file: string,
   options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: Buffer, stderr: Buffer) => void,
+  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
 ): ChildProcess;
 export function execFile(
   file: string,
   args: readonly string[] | undefined | null,
   options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: Buffer, stderr: Buffer) => void,
+  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
 ): ChildProcess;
 export function execFile(
   file: string,
@@ -151,8 +153,8 @@ export function execFile(
   if (!cb) return child;
 
   const useBufferEncoding = options.encoding === "buffer" || options.encoding === null;
-  const stdoutChunks: (string | Buffer)[] = [];
-  const stderrChunks: (string | Buffer)[] = [];
+  const stdoutChunks: (string | NodeBuffer)[] = [];
+  const stderrChunks: (string | NodeBuffer)[] = [];
   let stdoutLen = 0;
   let stderrLen = 0;
   let killed = false;
@@ -221,8 +223,8 @@ export function execFile(
     if (!useBufferEncoding) {
       child.stdout.setEncoding(options.encoding ?? "utf8");
     }
-    child.stdout.on("data", (chunk: string | Buffer) => {
-      const length = Buffer.byteLength(chunk);
+    child.stdout.on("data", (chunk: string | NodeBuffer) => {
+      const length = RuntimeBuffer.byteLength(chunk);
       stdoutLen += length;
       if (stdoutLen > options.maxBuffer) {
         ex = new Error("stdout maxBuffer exceeded") as ExecFileException;
@@ -237,8 +239,8 @@ export function execFile(
     if (!useBufferEncoding) {
       child.stderr.setEncoding(options.encoding ?? "utf8");
     }
-    child.stderr.on("data", (chunk: string | Buffer) => {
-      const length = Buffer.byteLength(chunk);
+    child.stderr.on("data", (chunk: string | NodeBuffer) => {
+      const length = RuntimeBuffer.byteLength(chunk);
       stderrLen += length;
       if (stderrLen > options.maxBuffer) {
         ex = new Error("stderr maxBuffer exceeded") as ExecFileException;
@@ -262,7 +264,7 @@ function execFilePromisified(
   args?: readonly string[] | null,
   options?: ExecFileOptions | null,
 ) {
-  const promise = new Promise<{ stdout: string | Buffer; stderr: string | Buffer }>(
+  const promise = new Promise<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>(
     (resolve, reject) => {
       const child = execFile(file, args, options, (err: any, stdout: any, stderr: any) => {
         if (err) {
@@ -276,7 +278,7 @@ function execFilePromisified(
       (promise as any).child = child;
     },
   );
-  return promise as PromiseWithChild<{ stdout: string | Buffer; stderr: string | Buffer }>;
+  return promise as PromiseWithChild<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>;
 }
 
 (execFile as any).__promisify__ = execFilePromisified;
@@ -284,13 +286,13 @@ function execFilePromisified(
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function joinOutput(
-  chunks: (string | Buffer)[],
+  chunks: (string | NodeBuffer)[],
   asBuffer: boolean,
   encoding: BufferEncoding,
-): string | Buffer {
+): string | NodeBuffer {
   const buffers = chunks.map((chunk) =>
-    typeof chunk === "string" ? Buffer.from(chunk, encoding) : chunk,
+    typeof chunk === "string" ? (RuntimeBuffer.from(chunk, encoding) as NodeBuffer) : chunk,
   );
-  const output = Buffer.concat(buffers);
+  const output = RuntimeBuffer.concat(buffers) as NodeBuffer;
   return asBuffer ? output : output.toString(encoding);
 }

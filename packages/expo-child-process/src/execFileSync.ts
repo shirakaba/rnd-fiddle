@@ -5,18 +5,20 @@
  * Like execFile, but synchronous. Throws on non-zero exit.
  */
 
-import { Buffer } from "buffer";
+import type { Buffer as NodeBuffer } from "buffer";
+
+import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
 import type { ExecFileSyncOptions, SpawnSyncOptions } from "./types";
 
 import { spawnSync } from "./spawnSync";
 
-export function execFileSync(file: string): Buffer;
-export function execFileSync(file: string, args: readonly string[]): Buffer;
+export function execFileSync(file: string): NodeBuffer;
+export function execFileSync(file: string, args: readonly string[]): NodeBuffer;
 export function execFileSync(
   file: string,
   options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): Buffer;
+): NodeBuffer;
 export function execFileSync(
   file: string,
   options: ExecFileSyncOptions & { encoding: BufferEncoding },
@@ -25,7 +27,7 @@ export function execFileSync(
   file: string,
   args: readonly string[],
   options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): Buffer;
+): NodeBuffer;
 export function execFileSync(
   file: string,
   args: readonly string[],
@@ -35,12 +37,12 @@ export function execFileSync(
   file: string,
   args?: readonly string[] | ExecFileSyncOptions,
   options?: ExecFileSyncOptions,
-): string | Buffer;
+): string | NodeBuffer;
 export function execFileSync(
   file: string,
   args?: readonly string[] | ExecFileSyncOptions,
   options?: ExecFileSyncOptions,
-): string | Buffer {
+): string | NodeBuffer {
   let normalizedArgs: readonly string[];
   let opts: ExecFileSyncOptions;
 
@@ -65,7 +67,7 @@ export function execFileSync(
   }
 
   if (ret.status !== 0 || ret.signal) {
-    const stderr = Buffer.isBuffer(ret.stderr) ? ret.stderr.toString("utf8") : ret.stderr;
+    const stderr = RuntimeBuffer.isBuffer(ret.stderr) ? ret.stderr.toString("utf8") : ret.stderr;
     const cmd = [file, ...normalizedArgs].join(" ");
     let msg = `Command failed: ${cmd}`;
     if (stderr && typeof stderr === "string" && stderr.length > 0) {

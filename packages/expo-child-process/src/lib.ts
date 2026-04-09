@@ -7,8 +7,6 @@
 
 import type { Readable, Writable } from "stream";
 
-import { Buffer } from "buffer";
-
 import type {
   ChildProcess as NodeChildProcess,
   ExecException,
@@ -33,6 +31,8 @@ import type {
 
 import { NodeEventEmitter } from "./NodeEventEmitter";
 
+type NodeBuffer = import("buffer").Buffer;
+
 function notSupported(name: string): never {
   throw new Error(`child_process.${name}() is only supported on macOS`);
 }
@@ -48,7 +48,7 @@ export class ChildReadable extends NodeEventEmitter {
     return notSupported("Readable.setEncoding");
   }
 
-  read(_size?: number): string | Buffer | null {
+  read(_size?: number): string | NodeBuffer | null {
     return notSupported("Readable.read");
   }
 
@@ -181,7 +181,7 @@ export function exec(
 export function exec(
   command: string,
   options: ExecOptionsWithBufferEncoding,
-  callback?: (error: ExecException | null, stdout: Buffer, stderr: Buffer) => void,
+  callback?: (error: ExecException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
 ): ChildProcess;
 export function exec(
   command: string,
@@ -193,8 +193,8 @@ export function exec(
   options: ExecOptions | undefined | null,
   callback?: (
     error: ExecException | null,
-    stdout: string | Buffer,
-    stderr: string | Buffer,
+    stdout: string | NodeBuffer,
+    stderr: string | NodeBuffer,
   ) => void,
 ): ChildProcess;
 export function exec(_command: string, _options?: unknown, _callback?: unknown): ChildProcess {
@@ -213,13 +213,13 @@ export function execFile(
 export function execFile(
   file: string,
   options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: Buffer, stderr: Buffer) => void,
+  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
 ): ChildProcess;
 export function execFile(
   file: string,
   args: readonly string[] | undefined | null,
   options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: Buffer, stderr: Buffer) => void,
+  callback?: (error: ExecFileException | null, stdout: NodeBuffer, stderr: NodeBuffer) => void,
 ): ChildProcess;
 export function execFile(
   file: string,
@@ -236,7 +236,11 @@ export function execFile(
   file: string,
   options: ExecFileOptions | undefined | null,
   callback?:
-    | ((error: ExecFileException | null, stdout: string | Buffer, stderr: string | Buffer) => void)
+    | ((
+        error: ExecFileException | null,
+        stdout: string | NodeBuffer,
+        stderr: string | NodeBuffer,
+      ) => void)
     | null,
 ): ChildProcess;
 export function execFile(
@@ -244,7 +248,11 @@ export function execFile(
   args: readonly string[] | undefined | null,
   options: ExecFileOptions | undefined | null,
   callback?:
-    | ((error: ExecFileException | null, stdout: string | Buffer, stderr: string | Buffer) => void)
+    | ((
+        error: ExecFileException | null,
+        stdout: string | NodeBuffer,
+        stderr: string | NodeBuffer,
+      ) => void)
     | null,
 ): ChildProcess;
 export function execFile(
@@ -264,8 +272,8 @@ export function fork(
   return notSupported("fork");
 }
 
-export function spawnSync(command: string): SpawnSyncReturns<Buffer>;
-export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<Buffer>;
+export function spawnSync(command: string): SpawnSyncReturns<NodeBuffer>;
+export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<NodeBuffer>;
 export function spawnSync(
   command: string,
   args: readonly string[],
@@ -279,35 +287,35 @@ export function spawnSync(
   command: string,
   args?: readonly string[] | SpawnSyncOptions,
   options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | Buffer>;
+): SpawnSyncReturns<string | NodeBuffer>;
 export function spawnSync(
   _command: string,
   _args?: unknown,
   _options?: unknown,
-): SpawnSyncReturns<string | Buffer> {
+): SpawnSyncReturns<string | NodeBuffer> {
   return notSupported("spawnSync");
 }
 
-export function execSync(command: string): Buffer;
+export function execSync(command: string): NodeBuffer;
 export function execSync(
   command: string,
   options: ExecSyncOptions & { encoding: "buffer" | null },
-): Buffer;
+): NodeBuffer;
 export function execSync(
   command: string,
   options: ExecSyncOptions & { encoding: BufferEncoding },
 ): string;
-export function execSync(command: string, options?: ExecSyncOptions): string | Buffer;
-export function execSync(_command: string, _options?: unknown): string | Buffer {
+export function execSync(command: string, options?: ExecSyncOptions): string | NodeBuffer;
+export function execSync(_command: string, _options?: unknown): string | NodeBuffer {
   return notSupported("execSync");
 }
 
-export function execFileSync(file: string): Buffer;
-export function execFileSync(file: string, args: readonly string[]): Buffer;
+export function execFileSync(file: string): NodeBuffer;
+export function execFileSync(file: string, args: readonly string[]): NodeBuffer;
 export function execFileSync(
   file: string,
   options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): Buffer;
+): NodeBuffer;
 export function execFileSync(
   file: string,
   options: ExecFileSyncOptions & { encoding: BufferEncoding },
@@ -316,7 +324,7 @@ export function execFileSync(
   file: string,
   args: readonly string[],
   options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): Buffer;
+): NodeBuffer;
 export function execFileSync(
   file: string,
   args: readonly string[],
@@ -326,8 +334,12 @@ export function execFileSync(
   file: string,
   args?: readonly string[] | ExecFileSyncOptions,
   options?: ExecFileSyncOptions,
-): string | Buffer;
-export function execFileSync(_file: string, _args?: unknown, _options?: unknown): string | Buffer {
+): string | NodeBuffer;
+export function execFileSync(
+  _file: string,
+  _args?: unknown,
+  _options?: unknown,
+): string | NodeBuffer {
   return notSupported("execFileSync");
 }
 

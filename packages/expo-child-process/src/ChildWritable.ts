@@ -9,9 +9,11 @@
  * Architectured so the full Writable API can be layered on later.
  */
 
-import { Buffer } from "buffer";
+import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
 import { NodeEventEmitter } from "./NodeEventEmitter";
+
+type NodeBuffer = import("buffer").Buffer;
 
 export type NativeWriteFn = (childId: string, base64Data: string) => boolean;
 export type NativeCloseStdinFn = (childId: string) => boolean;
@@ -107,11 +109,11 @@ export class ChildWritable extends NodeEventEmitter {
 }
 
 function chunkToBase64(chunk: string | Uint8Array, encoding: string = "utf8"): string {
-  let bytes: Buffer;
+  let bytes: NodeBuffer;
   if (typeof chunk === "string") {
-    bytes = Buffer.from(chunk, encoding as BufferEncoding);
+    bytes = RuntimeBuffer.from(chunk, encoding as BufferEncoding) as NodeBuffer;
   } else if (chunk instanceof Uint8Array) {
-    bytes = Buffer.from(chunk);
+    bytes = RuntimeBuffer.from(chunk) as NodeBuffer;
   } else {
     throw new TypeError("Unsupported chunk type");
   }
@@ -119,5 +121,5 @@ function chunkToBase64(chunk: string | Uint8Array, encoding: string = "utf8"): s
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
-  return Buffer.from(bytes).toString("base64");
+  return RuntimeBuffer.from(bytes).toString("base64");
 }

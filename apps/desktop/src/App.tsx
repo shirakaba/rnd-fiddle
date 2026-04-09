@@ -1,5 +1,6 @@
 /// <reference types="dubloon-electron-shim/main" />
-import { Buffer } from "buffer";
+import type { Buffer as NodeBuffer } from "buffer";
+
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
 import { spawn } from "expo-child-process";
@@ -20,7 +21,7 @@ export default function App() {
     const cp = spawn("node --version");
     const { stdout, stderr } = cp;
     console.log("got stdout", stdout);
-    stdout?.on("data", (buffer: Buffer) => {
+    stdout?.on("data", (buffer: NodeBuffer) => {
       console.log("[buffer]", buffer);
       console.log("[bufferstr]", buffer.toString());
     });

@@ -15,9 +15,11 @@
  * breaking changes.
  */
 
-import { Buffer } from "buffer";
+import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
 import { NodeEventEmitter } from "./NodeEventEmitter";
+
+type NodeBuffer = import("buffer").Buffer;
 
 export class ChildReadable extends NodeEventEmitter {
   readable: boolean = true;
@@ -27,14 +29,14 @@ export class ChildReadable extends NodeEventEmitter {
   destroyed: boolean = false;
 
   private _paused: boolean = false;
-  private _queue: Buffer[] = [];
+  private _queue: NodeBuffer[] = [];
 
   setEncoding(encoding: BufferEncoding): this {
     this.readableEncoding = encoding;
     return this;
   }
 
-  read(_size?: number): string | Buffer | null {
+  read(_size?: number): string | NodeBuffer | null {
     const chunk = this._queue.shift();
     return chunk ? this._formatChunk(chunk) : null;
   }
@@ -100,7 +102,7 @@ export class ChildReadable extends NodeEventEmitter {
     this.emit("close");
   }
 
-  private _formatChunk(bytes: Buffer): string | Buffer {
+  private _formatChunk(bytes: NodeBuffer): string | NodeBuffer {
     if (this.readableEncoding) {
       return bytes.toString(this.readableEncoding as BufferEncoding);
     }
@@ -108,6 +110,6 @@ export class ChildReadable extends NodeEventEmitter {
   }
 }
 
-function base64ToBuffer(base64: string): Buffer {
-  return Buffer.from(base64, "base64");
+function base64ToBuffer(base64: string): NodeBuffer {
+  return RuntimeBuffer.from(base64, "base64") as NodeBuffer;
 }

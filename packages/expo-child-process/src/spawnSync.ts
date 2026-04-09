@@ -3,7 +3,7 @@
  * https://github.com/nodejs/node/blob/main/lib/child_process.js
  */
 
-import { Buffer } from "buffer";
+import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
 import type { NativeSpawnSyncConfig, SpawnSyncOptions, SpawnSyncReturns } from "./types";
 
@@ -11,8 +11,10 @@ import { normalizeSignal } from "./constants";
 import { NativeModule } from "./ExpoChildProcessNative";
 import { normalizeSpawnArguments, normalizeStdio } from "./spawn";
 
-export function spawnSync(command: string): SpawnSyncReturns<Buffer>;
-export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<Buffer>;
+type NodeBuffer = import("buffer").Buffer;
+
+export function spawnSync(command: string): SpawnSyncReturns<NodeBuffer>;
+export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<NodeBuffer>;
 export function spawnSync(
   command: string,
   args: readonly string[],
@@ -26,12 +28,12 @@ export function spawnSync(
   command: string,
   args?: readonly string[] | SpawnSyncOptions,
   options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | Buffer>;
+): SpawnSyncReturns<string | NodeBuffer>;
 export function spawnSync(
   command: string,
   args?: readonly string[] | SpawnSyncOptions,
   options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | Buffer> {
+): SpawnSyncReturns<string | NodeBuffer> {
   const normalized = normalizeSpawnArguments(command, args as any, options as any);
   const opts: SpawnSyncOptions = {
     maxBuffer: 1024 * 1024,
@@ -101,15 +103,15 @@ function decodeOutput(
   base64: string,
   useBuffer: boolean,
   encoding?: string | null,
-): string | Buffer {
+): string | NodeBuffer {
   const bytes = base64ToBuffer(base64);
   return useBuffer ? bytes : bytes.toString((encoding ?? "utf8") as BufferEncoding);
 }
 
-function base64ToBuffer(base64: string): Buffer {
-  return Buffer.from(base64, "base64");
+function base64ToBuffer(base64: string): NodeBuffer {
+  return RuntimeBuffer.from(base64, "base64") as NodeBuffer;
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
-  return Buffer.from(bytes).toString("base64");
+  return RuntimeBuffer.from(bytes).toString("base64");
 }

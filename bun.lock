@@ -91,6 +91,7 @@
       "dependencies": {
         "buffer": "^6.0.3",
         "eventemitter3": "^5.0.4",
+        "react-native-buffer": "^6.0.4",
       },
       "peerDependencies": {
         "expo": "*",
@@ -1510,6 +1511,10 @@
     "react-mosaic-component": ["react-mosaic-component@7.0.0-beta0", "", { "dependencies": { "classnames": "^2.5.1", "dnd-core": "16.0.1", "immutability-helper": "^3.1.1", "lodash-es": "^4.17.21", "prop-types": "^15.8.1", "rdndmb-html5-to-touch": "^9.0.0", "react-dnd": "^16.0.1", "react-dnd-html5-backend": "^16.0.1", "react-dnd-multi-backend": "^9.0.0", "react-dnd-touch-backend": "^16.0.1", "uuid": "^11.1.0" }, "peerDependencies": { "react": "16 - 19" } }, "sha512-EUeXrDZm2w7mw2Vq8Nw7dovw+Hi5YtCe3ybI/Fnuw4mXk6AZ8p4N+XsJL9QB8sr724zUszpCveaLThZ7/XSLow=="],
 
     "react-native": ["react-native@0.81.6", "", { "dependencies": { "@jest/create-cache-key-function": "^29.7.0", "@react-native/assets-registry": "0.81.6", "@react-native/codegen": "0.81.6", "@react-native/community-cli-plugin": "0.81.6", "@react-native/gradle-plugin": "0.81.6", "@react-native/js-polyfills": "0.81.6", "@react-native/normalize-colors": "0.81.6", "@react-native/virtualized-lists": "0.81.6", "abort-controller": "^3.0.0", "anser": "^1.4.9", "ansi-regex": "^5.0.0", "babel-jest": "^29.7.0", "babel-plugin-syntax-hermes-parser": "0.29.1", "base64-js": "^1.5.1", "commander": "^12.0.0", "flow-enums-runtime": "^0.0.6", "glob": "^7.1.1", "invariant": "^2.2.4", "jest-environment-node": "^29.7.0", "memoize-one": "^5.0.0", "metro-runtime": "^0.83.1", "metro-source-map": "^0.83.1", "nullthrows": "^1.1.1", "pretty-format": "^29.7.0", "promise": "^8.3.0", "react-devtools-core": "^6.1.5", "react-refresh": "^0.14.0", "regenerator-runtime": "^0.13.2", "scheduler": "0.26.0", "semver": "^7.1.3", "stacktrace-parser": "^0.1.10", "whatwg-fetch": "^3.0.0", "ws": "^6.2.3", "yargs": "^17.6.2" }, "peerDependencies": { "@types/react": "^19.1.4", "react": "^19.1.4" }, "optionalPeers": ["@types/react"], "bin": { "react-native": "cli.js" } }, "sha512-X/tI8GqfzVaa+zfbE4+lySNN5UzwBIAVRHVZPKymOny9Acc5GYYcjAcEVfG3AM4h920YALWoSl8favnDmQEWIg=="],
+
+    "react-native-buffer": ["react-native-buffer@6.0.4", "", { "dependencies": { "ieee754": "^1.2.1", "react-native-fast-base64": "^0.1.4" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-tUPazFJ20YLCBwYfTDFkCAhLrXFlIjwmTV5wLlQPor7mBriDx8xip/QAxwrcJxzfWsX2/5TLh1LywmMfrTsFSg=="],
+
+    "react-native-fast-base64": ["react-native-fast-base64@0.1.4", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-Bt/YI+rWH8vBLpVR7g0+PmwXfiUTMGyDmKfYmDjZLwBCgIfL5aitL527tWlqmQ6XD+YE1M/nutuDAIRoS6nhQg=="],
 
     "react-native-is-edge-to-edge": ["react-native-is-edge-to-edge@1.3.1", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-NIXU/iT5+ORyCc7p0z2nnlkouYKX425vuU1OEm6bMMtWWR9yvb+Xg5AZmImTKoF9abxCPqrKC3rOZsKzUYgYZA=="],
 

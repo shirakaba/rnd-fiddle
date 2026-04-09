@@ -5,23 +5,25 @@
  * Runs a command in a shell synchronously. Throws on non-zero exit code.
  */
 
-import { Buffer } from "buffer";
+import type { Buffer as NodeBuffer } from "buffer";
+
+import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
 import type { ExecSyncOptions } from "./types";
 
 import { spawnSync } from "./spawnSync";
 
-export function execSync(command: string): Buffer;
+export function execSync(command: string): NodeBuffer;
 export function execSync(
   command: string,
   options: ExecSyncOptions & { encoding: "buffer" | null },
-): Buffer;
+): NodeBuffer;
 export function execSync(
   command: string,
   options: ExecSyncOptions & { encoding: BufferEncoding },
 ): string;
-export function execSync(command: string, options?: ExecSyncOptions): string | Buffer;
-export function execSync(command: string, options?: ExecSyncOptions): string | Buffer {
+export function execSync(command: string, options?: ExecSyncOptions): string | NodeBuffer;
+export function execSync(command: string, options?: ExecSyncOptions): string | NodeBuffer {
   const opts = {
     ...options,
     shell: typeof options?.shell === "string" ? options.shell : true,
@@ -34,7 +36,7 @@ export function execSync(command: string, options?: ExecSyncOptions): string | B
   }
 
   if (ret.status !== 0 || ret.signal) {
-    const stderr = Buffer.isBuffer(ret.stderr) ? ret.stderr.toString("utf8") : ret.stderr;
+    const stderr = RuntimeBuffer.isBuffer(ret.stderr) ? ret.stderr.toString("utf8") : ret.stderr;
     let msg = `Command failed: ${command}`;
     if (stderr && typeof stderr === "string" && stderr.length > 0) {
       msg += `\n${stderr}`;
