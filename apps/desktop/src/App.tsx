@@ -1,7 +1,7 @@
 /// <reference types="dubloon-electron-shim/main" />
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
-import ExpoChildProcess from "expo-child-process";
+import { spawn } from "expo-child-process";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
@@ -22,15 +22,16 @@ export default function App() {
   useIpcMain();
 
   useEffect(() => {
-    try {
-      const message = ExpoChildProcess.getMessage();
-      setSmokeMessage(message);
-      console.log("[expo-child-process]", message);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      setSmokeMessage(`Expo Module failed: ${message}`);
-      console.error("[expo-child-process]", error);
-    }
+    const cp = spawn("node --version");
+    const { stdout, stderr } = cp;
+    console.log("got stdout", stdout);
+    stdout?.on("data", (buffer) => {
+      console.log("[buffer]", buffer);
+      console.log("[bufferstr]", buffer.toString());
+    });
+    cp.on("close", (...args) => {
+      console.log(`[close]`, args);
+    });
   }, []);
 
   return (
