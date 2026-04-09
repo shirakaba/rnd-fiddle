@@ -12,7 +12,7 @@ import type { ForkOptions, StdioOptions } from "./types";
 
 import { spawn } from "./spawn";
 
-function stdioStringToArray(stdio: string, channel: string): StdioOptions {
+function stdioStringToArray(stdio: string, channel: "ignore"): StdioOptions {
   switch (stdio) {
     case "ignore":
       return ["ignore", "ignore", "ignore", channel];
@@ -40,7 +40,7 @@ export function fork(
     normalizedArgs = [];
   }
 
-  const opts: ForkOptions = { ...options, shell: false };
+  const opts: ForkOptions = { ...options };
   const execPath = opts.execPath ?? "node";
   const execArgv = opts.execArgv ?? [];
 
