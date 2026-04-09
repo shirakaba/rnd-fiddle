@@ -28,7 +28,7 @@ interface NativeSpawnSyncConfig extends NativeSpawnConfig {
 interface NativeSpawnSyncResult {
   pid: number;
   status: number | null;
-  signal: string | null;
+  signal: NodeJS.Signals | null;
   stdout: string;
   stderr: string;
   timedOut: boolean;
@@ -40,7 +40,7 @@ export interface ChildProcessNativeEvent {
   type: "spawn" | "stdout" | "stderr" | "stdoutEnd" | "stderrEnd" | "exit" | "error";
   data?: string;
   exitCode?: number | null;
-  signal?: string | null;
+  signal?: NodeJS.Signals | null;
   message?: string;
 }
 

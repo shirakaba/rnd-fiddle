@@ -111,5 +111,5 @@ export class ChildReadable extends NodeEventEmitter {
 }
 
 function base64ToBuffer(base64: string): NodeBuffer {
-  return RuntimeBuffer.from(base64, "base64") as NodeBuffer;
+  return RuntimeBuffer.from(base64, "base64") as unknown as NodeBuffer;
 }
