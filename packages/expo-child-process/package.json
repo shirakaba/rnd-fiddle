@@ -20,6 +20,9 @@
       "types": "./src/index.ts"
     }
   },
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
   "dependencies": {
     "buffer": "^6.0.3",
     "eventemitter3": "^5.0.4",

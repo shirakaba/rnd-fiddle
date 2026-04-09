@@ -9,11 +9,11 @@ import type { Buffer as NodeBuffer } from "buffer";
 
 import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
-import type { ExecSyncOptions } from "./types";
-
 import { spawnSync } from "./spawnSync";
 
-const execSyncImpl = (command: string, options?: ExecSyncOptions): string | NodeBuffer => {
+export const execSync: (
+  ...args: Parameters<typeof import("node:child_process").execSync>
+) => ReturnType<typeof import("node:child_process").execSync> = (command, options) => {
   const opts = {
     ...options,
     shell: typeof options?.shell === "string" ? options.shell : true,
@@ -43,6 +43,3 @@ const execSyncImpl = (command: string, options?: ExecSyncOptions): string | Node
 
   return ret.stdout;
 };
-
-export const execSync: typeof import("child_process").execSync =
-  execSyncImpl as typeof import("child_process").execSync;

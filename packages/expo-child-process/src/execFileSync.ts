@@ -13,11 +13,9 @@ import type { ExecFileSyncOptions, SpawnSyncOptions } from "./types";
 
 import { spawnSync } from "./spawnSync";
 
-const execFileSyncImpl = (
-  file: string,
-  args?: readonly string[] | ExecFileSyncOptions,
-  options?: ExecFileSyncOptions,
-): string | NodeBuffer => {
+export const execFileSync: (
+  ...args: Parameters<typeof import("node:child_process").execFileSync>
+) => ReturnType<typeof import("node:child_process").execFileSync> = (file, args, options) => {
   let normalizedArgs: readonly string[];
   let opts: ExecFileSyncOptions;
 
@@ -60,6 +58,3 @@ const execFileSyncImpl = (
 
   return ret.stdout;
 };
-
-export const execFileSync: typeof import("child_process").execFileSync =
-  execFileSyncImpl as typeof import("child_process").execFileSync;

@@ -111,9 +111,9 @@ export class ChildWritable extends NodeEventEmitter {
 function chunkToBase64(chunk: string | Uint8Array, encoding: string = "utf8"): string {
   let bytes: NodeBuffer;
   if (typeof chunk === "string") {
-    bytes = RuntimeBuffer.from(chunk, encoding as BufferEncoding) as NodeBuffer;
+    bytes = RuntimeBuffer.from(chunk, encoding as BufferEncoding) as unknown as NodeBuffer;
   } else if (chunk instanceof Uint8Array) {
-    bytes = RuntimeBuffer.from(chunk) as NodeBuffer;
+    bytes = RuntimeBuffer.from(chunk) as unknown as NodeBuffer;
   } else {
     throw new TypeError("Unsupported chunk type");
   }

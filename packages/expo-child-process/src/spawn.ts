@@ -120,7 +120,7 @@ export function buildNativeConfig(
 
 // ── spawn ──────────────────────────────────────────────────────────────────
 
-const spawnImpl = (
+export const spawn: typeof import("child_process").spawn = (
   command: string,
   args?: readonly string[] | SpawnOptionsWithoutStdio,
   options?: SpawnOptions,
@@ -177,6 +177,3 @@ const spawnImpl = (
 
   return child;
 };
-
-export const spawn: typeof import("child_process").spawn =
-  spawnImpl as typeof import("child_process").spawn;

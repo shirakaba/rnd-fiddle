@@ -8,7 +8,6 @@
 
 import { Buffer as RuntimeBuffer } from "react-native-buffer";
 
-import type { ChildProcess } from "./ChildProcess";
 import type { ExecFileException, ExecFileOptions, PromiseWithChild } from "./types";
 
 import { MAX_BUFFER } from "./constants";
@@ -25,16 +24,15 @@ type ExecFileCallback = (
 // ── normalizeExecFileArgs ──────────────────────────────────────────────────
 
 function normalizeExecFileArgs(
-  file: string,
-  args?: readonly string[] | ExecFileOptions | ExecFileCallback | null,
-  options?: ExecFileOptions | ExecFileCallback | null,
-  callback?: ExecFileCallback,
+  ...params: Parameters<typeof import("node:child_process").execFile>
 ): {
   file: string;
   args: string[];
   options: ExecFileOptions;
   callback: ExecFileCallback | undefined;
 } {
+  let [file, args, options, callback] = params;
+
   let normalizedArgs: string[];
 
   if (Array.isArray(args)) {
@@ -64,12 +62,14 @@ function normalizeExecFileArgs(
   };
 }
 
-const execFileImpl = (
-  file: string,
-  argsOrOptionsOrCallback?: any,
-  optionsOrCallback?: any,
-  callback?: ExecFileCallback,
-): ChildProcess => {
+const execFileImpl: (
+  ...args: Parameters<typeof import("node:child_process").execFile>
+) => ReturnType<typeof import("node:child_process").execFile> = (
+  file,
+  argsOrOptionsOrCallback,
+  optionsOrCallback,
+  callback,
+) => {
   const normalized = normalizeExecFileArgs(
     file,
     argsOrOptionsOrCallback,
@@ -207,12 +207,9 @@ const execFileImpl = (
   return child;
 };
 
-export const execFile = Object.assign(
-  execFileImpl as unknown as typeof import("child_process").execFile,
-  {
-    __promisify__: execFilePromisified as typeof import("child_process").execFile.__promisify__,
-  },
-);
+export const execFile: typeof import("node:child_process").execFile = Object.assign(execFileImpl, {
+  __promisify__: execFilePromisified as typeof import("child_process").execFile.__promisify__,
+});
 
 // ── execFile.__promisify__ ─────────────────────────────────────────────────
 
@@ -220,7 +217,7 @@ function execFilePromisified(
   file: string,
   args?: readonly string[] | null,
   options?: ExecFileOptions | null,
-) {
+): typeof import("child_process").execFile.__promisify__ {
   const promise = new Promise<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>(
     (resolve, reject) => {
       const child = execFile(file, args, options, (err: any, stdout: any, stderr: any) => {
@@ -235,7 +232,8 @@ function execFilePromisified(
       (promise as any).child = child;
     },
   );
-  return promise as PromiseWithChild<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>;
+
+  return promise;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

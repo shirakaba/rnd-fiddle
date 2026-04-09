@@ -36,27 +36,26 @@ function normalizeExecArgs(
   }
 
   const opts: ExecOptions = { ...options };
-  opts.shell = typeof opts.shell === "string" ? opts.shell : true;
 
   return { file: command, options: opts, callback };
 }
 
-const execImpl = (
-  command: string,
-  options: ExecOptions | undefined | null,
-  callback?: (
-    error: ExecException | null,
-    stdout: string | NodeBuffer,
-    stderr: string | NodeBuffer,
-  ) => void,
+const execImpl: (
+  ...args: Parameters<typeof import("node:child_process").exec>
+) => ReturnType<typeof import("node:child_process").exec> = (
+  command,
+  options,
+  callback,
 ): ChildProcess => {
-  return execFile(command, options, callback as ExecCallback | undefined) as ChildProcess;
+  return execFile(command, options, callback) as ChildProcess;
 };
 
-const execImplNormalized = (
-  command: string,
-  optionsOrCallback?: ExecOptions | ExecCallback | null,
-  callback?: ExecCallback,
+const execImplNormalized: (
+  ...args: Parameters<typeof import("node:child_process").exec>
+) => ReturnType<typeof import("node:child_process").exec> = (
+  command,
+  optionsOrCallback,
+  callback,
 ): ChildProcess => {
   const normalized = normalizeExecArgs(command, optionsOrCallback, callback);
   return execImpl(normalized.file, normalized.options, normalized.callback);

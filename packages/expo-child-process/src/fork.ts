@@ -7,7 +7,6 @@
  * functionality (send, disconnect, 'message' event) is not available.
  */
 
-import type { ChildProcess } from "./ChildProcess";
 import type { ForkOptions, StdioOptions } from "./types";
 
 import { spawn } from "./spawn";
@@ -25,11 +24,9 @@ function stdioStringToArray(stdio: string, channel: "ignore"): StdioOptions {
   }
 }
 
-const forkImpl = (
-  modulePath: string,
-  args?: readonly string[] | ForkOptions,
-  options?: ForkOptions,
-): ChildProcess => {
+export const fork: (
+  ...args: Parameters<typeof import("node:child_process").fork>
+) => ReturnType<typeof import("node:child_process").fork> = (modulePath, args, options) => {
   let normalizedArgs: string[];
   if (Array.isArray(args)) {
     normalizedArgs = args.slice();
@@ -44,7 +41,11 @@ const forkImpl = (
   const execPath = opts.execPath ?? "node";
   const execArgv = opts.execArgv ?? [];
 
-  const spawnArgs = [...execArgv, modulePath, ...normalizedArgs];
+  const spawnArgs: Parameters<typeof import("node:child_process").spawn>[1] = [
+    ...execArgv,
+    modulePath,
+    ...normalizedArgs,
+  ];
 
   // Set up stdio — normally fork includes 'ipc', but we don't support IPC.
   // Just use pipe/inherit based on silent option.
@@ -62,6 +63,3 @@ const forkImpl = (
     stdio,
   });
 };
-
-export const fork: typeof import("child_process").fork =
-  forkImpl as typeof import("child_process").fork;
