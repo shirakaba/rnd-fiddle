@@ -18,6 +18,9 @@
     ".": {
       "default": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./package.json": {
+      "default": "./package.json"
     }
   },
   "scripts": {
@@ -29,7 +32,6 @@
     "react-native-buffer": "^6.0.4"
   },
   "devDependencies": {
-    "expo": "workspace:",
     "react-native": "workspace:"
   },
   "peerDependencies": {
