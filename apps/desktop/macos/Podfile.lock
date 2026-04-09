@@ -2370,7 +2370,7 @@ DEPENDENCIES:
   - "ExpoFileSystem (from `../../../node_modules/.bun/expo-file-system@19.0.21+e0830a2575043e0d/node_modules/expo-file-system/ios`)"
   - "ExpoFont (from `../../../node_modules/.bun/expo-font@14.0.11+e0830a2575043e0d/node_modules/expo-font/ios`)"
   - "ExpoKeepAwake (from `../../../node_modules/.bun/expo-keep-awake@15.0.8+4968621bbd67de62/node_modules/expo-keep-awake/ios`)"
-  - "ExpoModulesCore (from `../../../node_modules/.bun/expo-modules-core@3.0.29+4fc874f04ead87df/node_modules/expo-modules-core`)"
+  - "ExpoModulesCore (from `../../../node_modules/.bun/expo-modules-core@3.0.29+3381e4f478599fbd/node_modules/expo-modules-core`)"
   - "fast_float (from `../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/third-party-podspecs/fast_float.podspec`)"
   - "FBLazyVector (from `../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/Libraries/FBLazyVector`)"
   - "fmt (from `../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/third-party-podspecs/fmt.podspec`)"
@@ -2470,7 +2470,7 @@ EXTERNAL SOURCES:
   ExpoKeepAwake:
     :path: "../../../node_modules/.bun/expo-keep-awake@15.0.8+4968621bbd67de62/node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
-    :path: "../../../node_modules/.bun/expo-modules-core@3.0.29+4fc874f04ead87df/node_modules/expo-modules-core"
+    :path: "../../../node_modules/.bun/expo-modules-core@3.0.29+3381e4f478599fbd/node_modules/expo-modules-core"
   fast_float:
     :podspec: "../../../node_modules/.bun/react-native-macos@0.81.2+4fc874f04ead87df/node_modules/react-native-macos/third-party-podspecs/fast_float.podspec"
   FBLazyVector:

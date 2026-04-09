@@ -17,11 +17,11 @@
   "dependencies": {
     "dubloon": "^0.0.4",
     "dubloon-electron-shim": "workspace:",
-    "expo": "workspace:",
+    "expo": "catalog:",
     "expo-child-process": "workspace:",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.4",
-    "react-native": "workspace:",
+    "react-native": "catalog:",
     "react-native-macos": "0.81.2",
     "react-native-webview": "catalog:"
   },
