@@ -5,21 +5,23 @@
  * Runs a command in a shell synchronously. Throws on non-zero exit code.
  */
 
+import { Buffer } from "buffer";
+
 import type { ExecSyncOptions } from "./types";
 
 import { spawnSync } from "./spawnSync";
 
-export function execSync(command: string): Uint8Array;
+export function execSync(command: string): Buffer;
 export function execSync(
   command: string,
   options: ExecSyncOptions & { encoding: "buffer" | null },
-): Uint8Array;
+): Buffer;
 export function execSync(
   command: string,
   options: ExecSyncOptions & { encoding: BufferEncoding },
 ): string;
-export function execSync(command: string, options?: ExecSyncOptions): string | Uint8Array;
-export function execSync(command: string, options?: ExecSyncOptions): string | Uint8Array {
+export function execSync(command: string, options?: ExecSyncOptions): string | Buffer;
+export function execSync(command: string, options?: ExecSyncOptions): string | Buffer {
   const opts = {
     ...options,
     shell: typeof options?.shell === "string" ? options.shell : true,
@@ -32,8 +34,7 @@ export function execSync(command: string, options?: ExecSyncOptions): string | U
   }
 
   if (ret.status !== 0 || ret.signal) {
-    const stderr =
-      ret.stderr instanceof Uint8Array ? new TextDecoder().decode(ret.stderr) : ret.stderr;
+    const stderr = Buffer.isBuffer(ret.stderr) ? ret.stderr.toString("utf8") : ret.stderr;
     let msg = `Command failed: ${command}`;
     if (stderr && typeof stderr === "string" && stderr.length > 0) {
       msg += `\n${stderr}`;
@@ -50,5 +51,3 @@ export function execSync(command: string, options?: ExecSyncOptions): string | U
 
   return ret.stdout;
 }
-
-type BufferEncoding = "utf8" | "utf-8" | "ascii" | "latin1" | "hex" | "base64";

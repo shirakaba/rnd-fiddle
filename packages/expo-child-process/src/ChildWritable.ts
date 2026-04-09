@@ -9,6 +9,8 @@
  * Architectured so the full Writable API can be layered on later.
  */
 
+import { Buffer } from "buffer";
+
 import { NodeEventEmitter } from "./NodeEventEmitter";
 
 export type NativeWriteFn = (childId: string, base64Data: string) => boolean;
@@ -41,7 +43,7 @@ export class ChildWritable extends NodeEventEmitter {
 
   write(
     chunk: string | Uint8Array,
-    encodingOrCallback?: string | ((error?: Error | null) => void),
+    encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
     callback?: (error?: Error | null) => void,
   ): boolean {
     const cb = typeof encodingOrCallback === "function" ? encodingOrCallback : callback;
@@ -59,7 +61,7 @@ export class ChildWritable extends NodeEventEmitter {
 
   end(
     chunkOrCallback?: string | Uint8Array | (() => void),
-    encodingOrCallback?: string | (() => void),
+    encodingOrCallback?: BufferEncoding | (() => void),
     callback?: () => void,
   ): this {
     const cb =
@@ -105,11 +107,11 @@ export class ChildWritable extends NodeEventEmitter {
 }
 
 function chunkToBase64(chunk: string | Uint8Array, encoding: string = "utf8"): string {
-  let bytes: Uint8Array;
-  if (chunk instanceof Uint8Array) {
-    bytes = chunk;
-  } else if (typeof chunk === "string") {
-    bytes = new TextEncoder().encode(chunk);
+  let bytes: Buffer;
+  if (typeof chunk === "string") {
+    bytes = Buffer.from(chunk, encoding as BufferEncoding);
+  } else if (chunk instanceof Uint8Array) {
+    bytes = Buffer.from(chunk);
   } else {
     throw new TypeError("Unsupported chunk type");
   }
@@ -117,15 +119,5 @@ function chunkToBase64(chunk: string | Uint8Array, encoding: string = "utf8"): s
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
-  if (typeof globalThis.Buffer !== "undefined") {
-    return globalThis.Buffer.from(bytes).toString("base64");
-  }
-  if (typeof globalThis.btoa === "function") {
-    let binary = "";
-    for (const b of bytes) {
-      binary += String.fromCharCode(b);
-    }
-    return globalThis.btoa(binary);
-  }
-  throw new Error("Base64 encoding not available in this runtime");
+  return Buffer.from(bytes).toString("base64");
 }

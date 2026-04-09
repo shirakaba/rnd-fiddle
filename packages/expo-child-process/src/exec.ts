@@ -6,6 +6,8 @@
  * Node.js does.
  */
 
+import { Buffer } from "buffer";
+
 import type { ChildProcess } from "./ChildProcess";
 import type {
   ExecException,
@@ -19,8 +21,8 @@ import { execFile } from "./execFile";
 
 type ExecCallback = (
   error: ExecException | null,
-  stdout: string | Uint8Array,
-  stderr: string | Uint8Array,
+  stdout: string | Buffer,
+  stderr: string | Buffer,
 ) => void;
 
 // ── normalizeExecArgs ──────────────────────────────────────────────────────
@@ -54,7 +56,7 @@ export function exec(
 export function exec(
   command: string,
   options: ExecOptionsWithBufferEncoding,
-  callback?: (error: ExecException | null, stdout: Uint8Array, stderr: Uint8Array) => void,
+  callback?: (error: ExecException | null, stdout: Buffer, stderr: Buffer) => void,
 ): ChildProcess;
 export function exec(
   command: string,
@@ -66,8 +68,8 @@ export function exec(
   options: ExecOptions | undefined | null,
   callback?: (
     error: ExecException | null,
-    stdout: string | Uint8Array,
-    stderr: string | Uint8Array,
+    stdout: string | Buffer,
+    stderr: string | Buffer,
   ) => void,
 ): ChildProcess;
 export function exec(
@@ -82,7 +84,7 @@ export function exec(
 // ── exec.__promisify__ ─────────────────────────────────────────────────────
 
 function execPromisified(command: string, options?: ExecOptions | null) {
-  const promise = new Promise<{ stdout: string | Uint8Array; stderr: string | Uint8Array }>(
+  const promise = new Promise<{ stdout: string | Buffer; stderr: string | Buffer }>(
     (resolve, reject) => {
       const child = exec(command, options ?? {}, (err, stdout, stderr) => {
         if (err) {
@@ -96,7 +98,7 @@ function execPromisified(command: string, options?: ExecOptions | null) {
       (promise as any).child = child;
     },
   );
-  return promise as PromiseWithChild<{ stdout: string | Uint8Array; stderr: string | Uint8Array }>;
+  return promise as PromiseWithChild<{ stdout: string | Buffer; stderr: string | Buffer }>;
 }
 
 (exec as any).__promisify__ = execPromisified;

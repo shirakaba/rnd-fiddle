@@ -15,6 +15,8 @@
  * breaking changes.
  */
 
+import { Buffer } from "buffer";
+
 import { NodeEventEmitter } from "./NodeEventEmitter";
 
 export class ChildReadable extends NodeEventEmitter {
@@ -25,15 +27,16 @@ export class ChildReadable extends NodeEventEmitter {
   destroyed: boolean = false;
 
   private _paused: boolean = false;
-  private _queue: Uint8Array[] = [];
+  private _queue: Buffer[] = [];
 
-  setEncoding(encoding: string): this {
+  setEncoding(encoding: BufferEncoding): this {
     this.readableEncoding = encoding;
     return this;
   }
 
-  read(_size?: number): any {
-    return null;
+  read(_size?: number): string | Buffer | null {
+    const chunk = this._queue.shift();
+    return chunk ? this._formatChunk(chunk) : null;
   }
 
   pause(): this {
@@ -77,7 +80,7 @@ export class ChildReadable extends NodeEventEmitter {
 
   /** Push a base64-encoded chunk received from the native module. */
   _pushBase64Chunk(base64: string): void {
-    const bytes = base64ToBytes(base64);
+    const bytes = base64ToBuffer(base64);
     if (this._paused) {
       this._queue.push(bytes);
       return;
@@ -97,26 +100,14 @@ export class ChildReadable extends NodeEventEmitter {
     this.emit("close");
   }
 
-  private _formatChunk(bytes: Uint8Array): string | Uint8Array {
+  private _formatChunk(bytes: Buffer): string | Buffer {
     if (this.readableEncoding) {
-      return new TextDecoder(this.readableEncoding).decode(bytes);
+      return bytes.toString(this.readableEncoding as BufferEncoding);
     }
     return bytes;
   }
 }
 
-function base64ToBytes(base64: string): Uint8Array {
-  if (!base64) return new Uint8Array(0);
-  if (typeof globalThis.Buffer !== "undefined") {
-    return new Uint8Array(globalThis.Buffer.from(base64, "base64"));
-  }
-  if (typeof globalThis.atob === "function") {
-    const binary = globalThis.atob(base64);
-    const out = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      out[i] = binary.charCodeAt(i);
-    }
-    return out;
-  }
-  throw new Error("Base64 decoding not available in this runtime");
+function base64ToBuffer(base64: string): Buffer {
+  return Buffer.from(base64, "base64");
 }

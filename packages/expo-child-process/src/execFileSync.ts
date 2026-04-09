@@ -5,16 +5,18 @@
  * Like execFile, but synchronous. Throws on non-zero exit.
  */
 
+import { Buffer } from "buffer";
+
 import type { ExecFileSyncOptions, SpawnSyncOptions } from "./types";
 
 import { spawnSync } from "./spawnSync";
 
-export function execFileSync(file: string): Uint8Array;
-export function execFileSync(file: string, args: readonly string[]): Uint8Array;
+export function execFileSync(file: string): Buffer;
+export function execFileSync(file: string, args: readonly string[]): Buffer;
 export function execFileSync(
   file: string,
   options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): Uint8Array;
+): Buffer;
 export function execFileSync(
   file: string,
   options: ExecFileSyncOptions & { encoding: BufferEncoding },
@@ -23,7 +25,7 @@ export function execFileSync(
   file: string,
   args: readonly string[],
   options: ExecFileSyncOptions & { encoding: "buffer" | null },
-): Uint8Array;
+): Buffer;
 export function execFileSync(
   file: string,
   args: readonly string[],
@@ -33,12 +35,12 @@ export function execFileSync(
   file: string,
   args?: readonly string[] | ExecFileSyncOptions,
   options?: ExecFileSyncOptions,
-): string | Uint8Array;
+): string | Buffer;
 export function execFileSync(
   file: string,
   args?: readonly string[] | ExecFileSyncOptions,
   options?: ExecFileSyncOptions,
-): string | Uint8Array {
+): string | Buffer {
   let normalizedArgs: readonly string[];
   let opts: ExecFileSyncOptions;
 
@@ -63,8 +65,7 @@ export function execFileSync(
   }
 
   if (ret.status !== 0 || ret.signal) {
-    const stderr =
-      ret.stderr instanceof Uint8Array ? new TextDecoder().decode(ret.stderr) : ret.stderr;
+    const stderr = Buffer.isBuffer(ret.stderr) ? ret.stderr.toString("utf8") : ret.stderr;
     const cmd = [file, ...normalizedArgs].join(" ");
     let msg = `Command failed: ${cmd}`;
     if (stderr && typeof stderr === "string" && stderr.length > 0) {
@@ -82,5 +83,3 @@ export function execFileSync(
 
   return ret.stdout;
 }
-
-type BufferEncoding = "utf8" | "utf-8" | "ascii" | "latin1" | "hex" | "base64";

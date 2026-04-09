@@ -6,6 +6,8 @@
  * Buffers stdout/stderr and invokes the callback when the child exits.
  */
 
+import { Buffer } from "buffer";
+
 import type { ChildProcess } from "./ChildProcess";
 import type {
   ExecFileException,
@@ -20,8 +22,8 @@ import { spawn } from "./spawn";
 
 type ExecFileCallback = (
   error: ExecFileException | null,
-  stdout: string | Uint8Array,
-  stderr: string | Uint8Array,
+  stdout: string | Buffer,
+  stderr: string | Buffer,
 ) => void;
 
 // ── normalizeExecFileArgs ──────────────────────────────────────────────────
@@ -80,13 +82,13 @@ export function execFile(
 export function execFile(
   file: string,
   options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: Uint8Array, stderr: Uint8Array) => void,
+  callback?: (error: ExecFileException | null, stdout: Buffer, stderr: Buffer) => void,
 ): ChildProcess;
 export function execFile(
   file: string,
   args: readonly string[] | undefined | null,
   options: ExecFileOptionsWithBufferEncoding,
-  callback?: (error: ExecFileException | null, stdout: Uint8Array, stderr: Uint8Array) => void,
+  callback?: (error: ExecFileException | null, stdout: Buffer, stderr: Buffer) => void,
 ): ChildProcess;
 export function execFile(
   file: string,
@@ -149,8 +151,8 @@ export function execFile(
   if (!cb) return child;
 
   const useBufferEncoding = options.encoding === "buffer" || options.encoding === null;
-  const stdoutChunks: (string | Uint8Array)[] = [];
-  const stderrChunks: (string | Uint8Array)[] = [];
+  const stdoutChunks: (string | Buffer)[] = [];
+  const stderrChunks: (string | Buffer)[] = [];
   let stdoutLen = 0;
   let stderrLen = 0;
   let killed = false;
@@ -167,8 +169,8 @@ export function execFile(
       timeoutId = null;
     }
 
-    const stdout = joinOutput(stdoutChunks, useBufferEncoding);
-    const stderr = joinOutput(stderrChunks, useBufferEncoding);
+    const stdout = joinOutput(stdoutChunks, useBufferEncoding, options.encoding ?? "utf8");
+    const stderr = joinOutput(stderrChunks, useBufferEncoding, options.encoding ?? "utf8");
 
     if (!ex && code === 0 && signal === null) {
       cb(null, stdout as any, stderr as any);
@@ -219,8 +221,8 @@ export function execFile(
     if (!useBufferEncoding) {
       child.stdout.setEncoding(options.encoding ?? "utf8");
     }
-    child.stdout.on("data", (chunk: string | Uint8Array) => {
-      const length = typeof chunk === "string" ? chunk.length : chunk.byteLength;
+    child.stdout.on("data", (chunk: string | Buffer) => {
+      const length = Buffer.byteLength(chunk);
       stdoutLen += length;
       if (stdoutLen > options.maxBuffer) {
         ex = new Error("stdout maxBuffer exceeded") as ExecFileException;
@@ -235,8 +237,8 @@ export function execFile(
     if (!useBufferEncoding) {
       child.stderr.setEncoding(options.encoding ?? "utf8");
     }
-    child.stderr.on("data", (chunk: string | Uint8Array) => {
-      const length = typeof chunk === "string" ? chunk.length : chunk.byteLength;
+    child.stderr.on("data", (chunk: string | Buffer) => {
+      const length = Buffer.byteLength(chunk);
       stderrLen += length;
       if (stderrLen > options.maxBuffer) {
         ex = new Error("stderr maxBuffer exceeded") as ExecFileException;
@@ -260,7 +262,7 @@ function execFilePromisified(
   args?: readonly string[] | null,
   options?: ExecFileOptions | null,
 ) {
-  const promise = new Promise<{ stdout: string | Uint8Array; stderr: string | Uint8Array }>(
+  const promise = new Promise<{ stdout: string | Buffer; stderr: string | Buffer }>(
     (resolve, reject) => {
       const child = execFile(file, args, options, (err: any, stdout: any, stderr: any) => {
         if (err) {
@@ -274,26 +276,21 @@ function execFilePromisified(
       (promise as any).child = child;
     },
   );
-  return promise as PromiseWithChild<{ stdout: string | Uint8Array; stderr: string | Uint8Array }>;
+  return promise as PromiseWithChild<{ stdout: string | Buffer; stderr: string | Buffer }>;
 }
 
 (execFile as any).__promisify__ = execFilePromisified;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function joinOutput(chunks: (string | Uint8Array)[], asBuffer: boolean): string | Uint8Array {
-  if (!asBuffer) {
-    return chunks
-      .map((c) => (typeof c === "string" ? c : new TextDecoder("utf8").decode(c)))
-      .join("");
-  }
-  const byteChunks = chunks.map((c) => (typeof c === "string" ? new TextEncoder().encode(c) : c));
-  const totalLength = byteChunks.reduce((sum, c) => sum + c.byteLength, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of byteChunks) {
-    result.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return result;
+function joinOutput(
+  chunks: (string | Buffer)[],
+  asBuffer: boolean,
+  encoding: BufferEncoding,
+): string | Buffer {
+  const buffers = chunks.map((chunk) =>
+    typeof chunk === "string" ? Buffer.from(chunk, encoding) : chunk,
+  );
+  const output = Buffer.concat(buffers);
+  return asBuffer ? output : output.toString(encoding);
 }

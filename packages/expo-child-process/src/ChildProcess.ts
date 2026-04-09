@@ -1,14 +1,14 @@
 /**
- * ChildProcess class, modeled 1:1 on Node.js child_process.ChildProcess.
- *
- * Extends EventEmitter (via eventemitter3) and emits:
- *   - 'spawn'
- *   - 'exit'    (code, signal)
- *   - 'close'   (code, signal)
- *   - 'error'   (err)
- *   - 'disconnect'
- *   - 'message' (commented out — requires IPC / node:net)
+ * ChildProcess class backed by the native Expo module.
  */
+
+import type {
+  ChildProcess as NodeChildProcess,
+  MessageOptions,
+  SendHandle,
+  Serializable,
+} from "child_process";
+import type { Readable, Writable } from "stream";
 
 import type { NativeChildProcessEvent } from "./types";
 
@@ -21,24 +21,16 @@ import {
 } from "./ExpoChildProcessNative";
 import { NodeEventEmitter } from "./NodeEventEmitter";
 
-export class ChildProcess extends NodeEventEmitter {
-  stdin: ChildWritable | null = null;
-  stdout: ChildReadable | null = null;
-  stderr: ChildReadable | null = null;
-
-  readonly stdio: [
-    ChildWritable | null,
-    ChildReadable | null,
-    ChildReadable | null,
-    ChildReadable | ChildWritable | null | undefined,
-    ChildReadable | ChildWritable | null | undefined,
-  ] = [null, null, null, null, null];
-
-  // readonly channel?: undefined; // No IPC support
+export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
+  stdin: Writable | null = null;
+  stdout: Readable | null = null;
+  stderr: Readable | null = null;
+  readonly stdio: NodeChildProcess["stdio"] = [null, null, null, undefined, undefined];
+  readonly channel: NodeChildProcess["channel"] = undefined;
   pid: number | undefined = undefined;
   readonly connected: boolean = false;
   exitCode: number | null = null;
-  signalCode: string | null = null;
+  signalCode: NodeJS.Signals | null = null;
   spawnargs: string[] = [];
   spawnfile: string = "";
   killed: boolean = false;
@@ -105,21 +97,39 @@ export class ChildProcess extends NodeEventEmitter {
     this.kill("SIGTERM");
   }
 
-  // IPC — commented out, requires node:net SendHandle
-  // send(message: Serializable, callback?: (error: Error | null) => void): boolean;
-  // send(message: Serializable, sendHandle?: SendHandle, callback?: ...): boolean;
-  // send(message: Serializable, sendHandle?: SendHandle, options?: MessageOptions, callback?: ...): boolean;
+  send(message: Serializable, callback?: (error: Error | null) => void): boolean;
+  send(
+    message: Serializable,
+    sendHandle?: SendHandle,
+    callback?: (error: Error | null) => void,
+  ): boolean;
+  send(
+    message: Serializable,
+    sendHandle?: SendHandle,
+    options?: MessageOptions,
+    callback?: (error: Error | null) => void,
+  ): boolean;
+  send(
+    _message: Serializable,
+    _sendHandle?: SendHandle | ((error: Error | null) => void),
+    _options?: MessageOptions | ((error: Error | null) => void),
+    _callback?: (error: Error | null) => void,
+  ): boolean {
+    throw new Error("child_process.ChildProcess.send() is not implemented");
+  }
 
   disconnect(): void {
-    throw new Error("IPC is not supported in expo-child-process");
+    throw new Error("child_process.ChildProcess.disconnect() is not implemented");
   }
 
-  ref(): void {
+  ref(): this {
     // no-op in React Native context
+    return this;
   }
 
-  unref(): void {
+  unref(): this {
     // no-op in React Native context
+    return this;
   }
 
   // ── Internal: called by spawn() ──────────────────────────────────────────
@@ -147,22 +157,29 @@ export class ChildProcess extends NodeEventEmitter {
         NativeModule.writeToStdin.bind(NativeModule),
         NativeModule.closeStdin.bind(NativeModule),
         (err: Error) => this.emit("error", err),
-      );
+      ) as unknown as Writable;
     }
 
     if (stdoutMode === "pipe") {
-      this.stdout = new ChildReadable();
+      this.stdout = new ChildReadable() as unknown as Readable;
       this._closesNeeded++;
     }
 
     if (stderrMode === "pipe") {
-      this.stderr = new ChildReadable();
+      this.stderr = new ChildReadable() as unknown as Readable;
       this._closesNeeded++;
     }
 
-    (this.stdio as any)[0] = this.stdin;
-    (this.stdio as any)[1] = this.stdout;
-    (this.stdio as any)[2] = this.stderr;
+    const stdio = this.stdio as [
+      Writable | null,
+      Readable | null,
+      Readable | null,
+      Readable | Writable | null | undefined,
+      Readable | Writable | null | undefined,
+    ];
+    stdio[0] = this.stdin;
+    stdio[1] = this.stdout;
+    stdio[2] = this.stderr;
 
     registerChildProcess(id, this);
   }
@@ -224,20 +241,20 @@ export class ChildProcess extends NodeEventEmitter {
         break;
 
       case "stdout":
-        this.stdout?._pushBase64Chunk(event.data ?? "");
+        (this.stdout as ChildReadable | null)?._pushBase64Chunk(event.data ?? "");
         break;
 
       case "stderr":
-        this.stderr?._pushBase64Chunk(event.data ?? "");
+        (this.stderr as ChildReadable | null)?._pushBase64Chunk(event.data ?? "");
         break;
 
       case "stdoutEnd":
-        this.stdout?._end();
+        (this.stdout as ChildReadable | null)?._end();
         this._maybeClose();
         break;
 
       case "stderrEnd":
-        this.stderr?._end();
+        (this.stderr as ChildReadable | null)?._end();
         this._maybeClose();
         break;
 

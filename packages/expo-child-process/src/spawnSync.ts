@@ -3,14 +3,16 @@
  * https://github.com/nodejs/node/blob/main/lib/child_process.js
  */
 
+import { Buffer } from "buffer";
+
 import type { NativeSpawnSyncConfig, SpawnSyncOptions, SpawnSyncReturns } from "./types";
 
 import { normalizeSignal } from "./constants";
 import { NativeModule } from "./ExpoChildProcessNative";
 import { normalizeSpawnArguments, normalizeStdio } from "./spawn";
 
-export function spawnSync(command: string): SpawnSyncReturns<Uint8Array>;
-export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<Uint8Array>;
+export function spawnSync(command: string): SpawnSyncReturns<Buffer>;
+export function spawnSync(command: string, args: readonly string[]): SpawnSyncReturns<Buffer>;
 export function spawnSync(
   command: string,
   args: readonly string[],
@@ -24,12 +26,12 @@ export function spawnSync(
   command: string,
   args?: readonly string[] | SpawnSyncOptions,
   options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | Uint8Array>;
+): SpawnSyncReturns<string | Buffer>;
 export function spawnSync(
   command: string,
   args?: readonly string[] | SpawnSyncOptions,
   options?: SpawnSyncOptions,
-): SpawnSyncReturns<string | Uint8Array> {
+): SpawnSyncReturns<string | Buffer> {
   const normalized = normalizeSpawnArguments(command, args as any, options as any);
   const opts: SpawnSyncOptions = {
     maxBuffer: 1024 * 1024,
@@ -99,38 +101,15 @@ function decodeOutput(
   base64: string,
   useBuffer: boolean,
   encoding?: string | null,
-): string | Uint8Array {
-  const bytes = base64ToBytes(base64);
-  if (useBuffer) return bytes;
-  return new TextDecoder(encoding === "ascii" ? "ascii" : "utf-8").decode(bytes);
+): string | Buffer {
+  const bytes = base64ToBuffer(base64);
+  return useBuffer ? bytes : bytes.toString((encoding ?? "utf8") as BufferEncoding);
 }
 
-function base64ToBytes(base64: string): Uint8Array {
-  if (!base64) return new Uint8Array(0);
-  if (typeof globalThis.Buffer !== "undefined") {
-    return new Uint8Array(globalThis.Buffer.from(base64, "base64"));
-  }
-  if (typeof globalThis.atob === "function") {
-    const binary = globalThis.atob(base64);
-    const out = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      out[i] = binary.charCodeAt(i);
-    }
-    return out;
-  }
-  throw new Error("Base64 decoding not available");
+function base64ToBuffer(base64: string): Buffer {
+  return Buffer.from(base64, "base64");
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
-  if (typeof globalThis.Buffer !== "undefined") {
-    return globalThis.Buffer.from(bytes).toString("base64");
-  }
-  if (typeof globalThis.btoa === "function") {
-    let binary = "";
-    for (const b of bytes) {
-      binary += String.fromCharCode(b);
-    }
-    return globalThis.btoa(binary);
-  }
-  throw new Error("Base64 encoding not available");
+  return Buffer.from(bytes).toString("base64");
 }

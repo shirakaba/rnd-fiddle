@@ -17,8 +17,11 @@ export { fork } from "./fork";
 export { spawnSync } from "./spawnSync";
 export { execSync } from "./execSync";
 export { execFileSync } from "./execFileSync";
-
 export type {
+  ChildProcess as NodeChildProcess,
+  ChildProcessByStdio,
+  ChildProcessWithoutNullStreams,
+  CommonExecOptions,
   CommonOptions,
   CommonSpawnOptions,
   ExecException,
@@ -41,6 +44,7 @@ export type {
   MessagingOptions,
   ProcessEnvOptions,
   PromiseWithChild,
+  SendHandle,
   Serializable,
   SerializationType,
   SpawnOptions,
