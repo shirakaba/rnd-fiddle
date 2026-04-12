@@ -161,7 +161,7 @@ private struct ProcessSpecification {
 
 // MARK: - Errors
 
-private enum ChildProcessError: Error, CustomStringConvertible {
+private enum ChildProcessError: LocalizedError, CustomStringConvertible {
   case invalidArguments(String)
   case invalidProcess(String)
   case launchFailure(String)
@@ -177,7 +177,7 @@ private enum ChildProcessError: Error, CustomStringConvertible {
     }
   }
   
-  public var localizedDescription: String {
+  var errorDescription: String? {
     return self.description
   }
 }
