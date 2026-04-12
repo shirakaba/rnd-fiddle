@@ -19,6 +19,10 @@
       "default": "./src/index.ts",
       "types": "./src/index.ts"
     },
+    "./readline": {
+      "default": "./src/readline.ts",
+      "types": "./src/readline.ts"
+    },
     "./package.json": {
       "default": "./package.json"
     }

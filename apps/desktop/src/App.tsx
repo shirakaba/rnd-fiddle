@@ -2,6 +2,7 @@
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
 import { spawn } from "expo-child-process";
+import { createInterface } from "expo-child-process/readline";
 import { useEffect, useRef } from "react";
 import { WebView } from "react-native-webview";
 
@@ -17,10 +18,26 @@ export default function App() {
 
   useEffect(() => {
     const child = spawn("/bin/ls", ["/Users/jamie"]);
+
+    const { stdin, stdout, stderr } = child;
+
+    if (!stdout || !stderr) {
+      throw new Error("Expected stdout and stderr to be populated");
+    }
+
+    const rl = createInterface({
+      input: stdin,
+      output: stdout,
+    });
+
+    rl.on("line", (line) => {
+      console.log(`Received: ${line}`);
+    });
+
     child.on("error", (error) => {
       console.error("[error]", error);
     });
-    child.stdout?.on("data", (buffer) => {
+    stdout.on("data", (buffer) => {
       console.log("[data]", buffer.toString());
     });
     child.on("close", (code, signal) => {
