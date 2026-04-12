@@ -65,3 +65,10 @@ export type ExecFileSyncOptionsWithStringEncoding =
   childProcess.ExecFileSyncOptionsWithStringEncoding;
 export type ExecFileSyncOptionsWithBufferEncoding =
   childProcess.ExecFileSyncOptionsWithBufferEncoding;
+
+/**
+ * Strip the __promisify__ type from a function
+ */
+export type Unpromisified<T extends (...args: Array<any>) => any> = (
+  ...args: Parameters<T>
+) => ReturnType<T>;

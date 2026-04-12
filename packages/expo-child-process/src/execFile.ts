@@ -8,18 +8,16 @@
 
 import { Buffer as RuntimeBuffer } from "buffer";
 
-import type { ExecFileException, ExecFileOptions, PromiseWithChild } from "./types";
+import type { ExecFileException, ExecFileOptions, Unpromisified } from "./types";
 
 import { MAX_BUFFER } from "./constants";
 import { spawn } from "./spawn";
 
 type NodeBuffer = import("buffer").Buffer;
 
-type ExecFileCallback = (
-  error: ExecFileException | null,
-  stdout: string | NodeBuffer,
-  stderr: string | NodeBuffer,
-) => void;
+export type ExecFileCallback = Parameters<
+  Unpromisified<typeof import("node:child_process").execFile>
+>[3];
 
 // ── normalizeExecFileArgs ──────────────────────────────────────────────────
 
@@ -62,9 +60,7 @@ function normalizeExecFileArgs(
   };
 }
 
-const execFileImpl: (
-  ...args: Parameters<typeof import("node:child_process").execFile>
-) => ReturnType<typeof import("node:child_process").execFile> = (
+const execFileImpl: Unpromisified<typeof import("node:child_process").execFile> = (
   file,
   argsOrOptionsOrCallback,
   optionsOrCallback,
@@ -208,32 +204,26 @@ const execFileImpl: (
 };
 
 export const execFile: typeof import("node:child_process").execFile = Object.assign(execFileImpl, {
-  __promisify__: execFilePromisified as typeof import("child_process").execFile.__promisify__,
+  __promisify__: execFilePromisified,
 });
 
 // ── execFile.__promisify__ ─────────────────────────────────────────────────
 
-function execFilePromisified(
-  file: string,
-  args?: readonly string[] | null,
-  options?: ExecFileOptions | null,
-): typeof import("child_process").execFile.__promisify__ {
-  const promise = new Promise<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>(
-    (resolve, reject) => {
-      const child = execFile(file, args, options, (err: any, stdout: any, stderr: any) => {
-        if (err) {
-          err.stdout = stdout;
-          err.stderr = stderr;
-          reject(err);
-        } else {
-          resolve({ stdout, stderr });
-        }
-      });
-      (promise as any).child = child;
-    },
-  );
-
-  return promise;
+function execFilePromisified(command: string, options?: ExecFileOptions | null) {
+  const promise = new Promise<
+    Omit<Awaited<typeof import("child_process").execFile.__promisify__>, "child">
+  >((resolve, reject) => {
+    (promise as any).child = execFile(command, options ?? {}, (err, stdout, stderr) => {
+      if (err) {
+        err.stdout = stdout;
+        err.stderr = stderr;
+        reject(err);
+      } else {
+        resolve({ stdout, stderr });
+      }
+    });
+  });
+  return promise as unknown as typeof import("child_process").execFile.__promisify__;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

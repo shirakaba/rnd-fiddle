@@ -6,18 +6,11 @@
  * Node.js does.
  */
 
-import type { ChildProcess } from "./ChildProcess";
-import type { ExecException, ExecOptions, PromiseWithChild } from "./types";
+import type { ExecOptions, Unpromisified } from "./types";
 
-import { execFile } from "./execFile";
+import { execFile, type ExecFileCallback } from "./execFile";
 
-type NodeBuffer = import("buffer").Buffer;
-
-type ExecCallback = (
-  error: ExecException | null,
-  stdout: string | NodeBuffer,
-  stderr: string | NodeBuffer,
-) => void;
+type ExecCallback = Parameters<Unpromisified<typeof import("node:child_process").exec>>[2];
 
 // ── normalizeExecArgs ──────────────────────────────────────────────────────
 
@@ -40,50 +33,42 @@ function normalizeExecArgs(
   return { file: command, options: opts, callback };
 }
 
-const execImpl: (
-  ...args: Parameters<typeof import("node:child_process").exec>
-) => ReturnType<typeof import("node:child_process").exec> = (
+const execImpl: Unpromisified<typeof import("node:child_process").exec> = (
   command,
   options,
   callback,
-): ChildProcess => {
-  return execFile(command, options, callback) as ChildProcess;
+) => {
+  return execFile(command, options, callback as ExecFileCallback);
 };
 
-const execImplNormalized: (
-  ...args: Parameters<typeof import("node:child_process").exec>
-) => ReturnType<typeof import("node:child_process").exec> = (
+const execImplNormalized: Unpromisified<typeof import("node:child_process").exec> = (
   command,
   optionsOrCallback,
   callback,
-): ChildProcess => {
+) => {
   const normalized = normalizeExecArgs(command, optionsOrCallback, callback);
   return execImpl(normalized.file, normalized.options, normalized.callback);
 };
 
-export const exec = Object.assign(
-  execImplNormalized as unknown as typeof import("child_process").exec,
-  {
-    __promisify__: execPromisified as typeof import("child_process").exec.__promisify__,
-  },
-);
+export const exec = Object.assign(execImplNormalized, {
+  __promisify__: execPromisified,
+});
 
 // ── exec.__promisify__ ─────────────────────────────────────────────────────
 
 function execPromisified(command: string, options?: ExecOptions | null) {
-  const promise = new Promise<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>(
-    (resolve, reject) => {
-      const child = exec(command, options ?? {}, (err, stdout, stderr) => {
-        if (err) {
-          (err as any).stdout = stdout;
-          (err as any).stderr = stderr;
-          reject(err);
-        } else {
-          resolve({ stdout, stderr });
-        }
-      });
-      (promise as any).child = child;
-    },
-  );
-  return promise as PromiseWithChild<{ stdout: string | NodeBuffer; stderr: string | NodeBuffer }>;
+  const promise = new Promise<
+    Omit<Awaited<typeof import("child_process").exec.__promisify__>, "child">
+  >((resolve, reject) => {
+    (promise as any).child = exec(command, options ?? {}, (err, stdout, stderr) => {
+      if (err) {
+        err.stdout = stdout;
+        err.stderr = stderr;
+        reject(err);
+      } else {
+        resolve({ stdout: stdout as string, stderr });
+      }
+    });
+  });
+  return promise as unknown as typeof import("child_process").exec.__promisify__;
 }
