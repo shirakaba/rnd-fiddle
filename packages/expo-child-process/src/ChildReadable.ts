@@ -82,6 +82,8 @@ export class ChildReadable extends NodeEventEmitter {
 
   /** Push a base64-encoded chunk received from the native module. */
   _pushBase64Chunk(base64: string): void {
+    // Using base64 is a huge bottleneck. Need to try swapping `buffer` for
+    // `react-native-buffer` again. Problem was that it was failing to autolink.
     const bytes = base64ToBuffer(base64);
     if (this._paused) {
       this._queue.push(bytes);

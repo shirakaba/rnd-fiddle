@@ -1,6 +1,4 @@
 /// <reference types="dubloon-electron-shim/main" />
-import type { Buffer as NodeBuffer } from "buffer";
-
 import { connectionProps } from "dubloon";
 import { ipcMain } from "dubloon-electron-shim/main";
 import { spawn } from "expo-child-process";
@@ -18,18 +16,15 @@ export default function App() {
   const ref = useRef<WebView>(null);
 
   useEffect(() => {
-    const cp = spawn("/bin/ls", ["/bin"]);
-    cp.on("error", (error) => {
-      console.error("Child process threw error", error);
+    const child = spawn("/bin/ls", ["/Users/jamie"]);
+    child.on("error", (error) => {
+      console.error("[error]", error);
     });
-    const { stdout, stderr } = cp;
-    console.log("got stdout, stderr", { stdout, stderr });
-    stdout?.on("data", (buffer: NodeBuffer) => {
-      console.log("[buffer]", buffer);
-      console.log("[bufferstr]", buffer.toString());
+    child.stdout?.on("data", (buffer) => {
+      console.log("[data]", buffer.toString());
     });
-    cp.on("close", (...args) => {
-      console.log(`[close]`, args);
+    child.on("close", (code, signal) => {
+      console.log(`[close] ${code}, ${signal}`);
     });
   }, []);
 
