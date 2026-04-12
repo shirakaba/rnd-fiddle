@@ -64,8 +64,8 @@ function execPromisified(command: string, options?: ExecOptions | null) {
   >((resolve, reject) => {
     (promise as any).child = exec(command, options ?? {}, (err, stdout, stderr) => {
       if (err) {
-        err.stdout = stdout;
-        err.stderr = stderr;
+        err.stdout = stdout as string;
+        err.stderr = stderr as string;
         reject(err);
       } else {
         resolve({ stdout: stdout as string, stderr });

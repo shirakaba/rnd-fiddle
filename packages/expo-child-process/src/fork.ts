@@ -7,7 +7,7 @@
  * functionality (send, disconnect, 'message' event) is not available.
  */
 
-import type { ForkOptions, UnPromisified, StdioOptions } from "./types";
+import type { ForkOptions, Unpromisified, StdioOptions } from "./types";
 
 import { spawn } from "./spawn";
 
@@ -24,7 +24,7 @@ function stdioStringToArray(stdio: string, channel: "ignore"): StdioOptions {
   }
 }
 
-export const fork: UnPromisified<typeof import("node:child_process").fork> = (
+export const fork: Unpromisified<typeof import("node:child_process").fork> = (
   modulePath,
   args,
   options,
@@ -45,7 +45,7 @@ export const fork: UnPromisified<typeof import("node:child_process").fork> = (
 
   const spawnArgs: Parameters<typeof import("node:child_process").spawn>[1] = [
     ...execArgv,
-    modulePath,
+    modulePath as string,
     ...normalizedArgs,
   ];
 

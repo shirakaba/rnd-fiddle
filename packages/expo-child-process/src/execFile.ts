@@ -248,8 +248,8 @@ function execFilePromisified(command: string, options?: ExecFileOptions | null) 
   >((resolve, reject) => {
     (promise as any).child = execFile(command, options ?? {}, (err, stdout, stderr) => {
       if (err) {
-        err.stdout = stdout;
-        err.stderr = stderr;
+        err.stdout = stdout as string;
+        err.stderr = stderr as string;
         reject(err);
       } else {
         resolve({ stdout, stderr });
