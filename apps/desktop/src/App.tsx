@@ -14,36 +14,23 @@ import { WebView } from "react-native-webview";
 declare const __VITE_PORT: number;
 
 export default function App() {
-  const ref = useRef<WebView>(null);
-
   useEffect(() => {
-    const child = spawn("/bin/ls", ["/Users/jamie"]);
-
-    const { stdin, stdout, stderr } = child;
-
+    const child = spawn("/bin/ls", ["/Users/jamie/git"]);
+    const { stdout, stderr } = child;
     if (!stdout || !stderr) {
       throw new Error("Expected stdout and stderr to be populated");
     }
 
-    const rl = createInterface({
-      input: stdin,
-      output: stdout,
-    });
+    const readStdout = createInterface({ input: stdout });
+    const readStderr = createInterface({ input: stderr });
+    readStdout.on("line", (line) => console.log(`[stdout] ${line}`));
+    readStderr.on("line", (line) => console.log(`[stderr] ${line}`));
 
-    rl.on("line", (line) => {
-      console.log(`Received: ${line}`);
-    });
-
-    child.on("error", (error) => {
-      console.error("[error]", error);
-    });
-    stdout.on("data", (buffer) => {
-      console.log("[data]", buffer.toString());
-    });
-    child.on("close", (code, signal) => {
-      console.log(`[close] ${code}, ${signal}`);
-    });
+    child.on("error", (error) => console.error("[error]", error));
+    child.on("close", (code, signal) => console.log(`[close] ${code}, ${signal}`));
   }, []);
+
+  const ref = useRef<WebView>(null);
 
   return (
     <WebView
