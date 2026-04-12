@@ -70,7 +70,7 @@ private struct ProcessSpecification {
 
   init(config: [String: Any]) throws {
     guard let file = config["file"] as? String, !file.isEmpty else {
-      throw ChildProcessError.invalidArguments("Missing or empty 'file' in spawn config")
+      throw ChildProcessError("Missing or empty 'file' in spawn config")
     }
 
     let args = config["args"] as? [String] ?? []
@@ -135,7 +135,7 @@ private struct ProcessSpecification {
       }
     }
 
-    throw ChildProcessError.launchFailure("Executable not found in PATH: \(file)")
+    throw ChildProcessError("Executable not found in PATH: \(file)")
   }
 
   private static func absolutePath(for path: String, cwd: String?) -> String {
@@ -156,29 +156,6 @@ private struct ProcessSpecification {
   private static func shellEscape(_ value: String) -> String {
     if value.isEmpty { return "''" }
     return "'\(value.replacingOccurrences(of: "'", with: "'\\''"))'"
-  }
-}
-
-// MARK: - Errors
-
-private enum ChildProcessError: LocalizedError, CustomStringConvertible {
-  case invalidArguments(String)
-  case invalidProcess(String)
-  case launchFailure(String)
-  case notSupported(String)
-
-  var description: String {
-    switch self {
-    case .invalidArguments(let msg),
-      .invalidProcess(let msg),
-      .launchFailure(let msg),
-      .notSupported(let msg):
-      return msg
-    }
-  }
-  
-  var errorDescription: String? {
-    return self.description
   }
 }
 
@@ -258,6 +235,26 @@ private func signalName(from number: Int32) -> String {
 }
 #endif
 
+// MARK: - Errors
+
+private class ChildProcessError: Exception {
+  private let errorDescription: String
+
+  init(_ message: String, file: String = #fileID, line: UInt = #line, function: String = #function) {
+    self.errorDescription = message
+    super.init(file: file, line: line, function: function)
+  }
+
+  init(_ error: Error, file: String = #fileID, line: UInt = #line, function: String = #function) {
+    self.errorDescription = error.localizedDescription
+    super.init(file: file, line: line, function: function)
+  }
+
+  override var reason: String {
+    return errorDescription
+  }
+}
+
 // MARK: - Module definition
 
 public final class ExpoChildProcessModule: Module {
@@ -274,25 +271,21 @@ public final class ExpoChildProcessModule: Module {
 
     Function("spawn") { (config: [String: Any]) throws -> [String: Any] in
       #if os(macOS)
-      do {
-        return try self.spawnProcess(config)
-      } catch let error as ChildProcessError {
-        throw UnexpectedException(error)
-      }
+      return try self.spawnProcess(config)
       #else
-      throw ChildProcessError.notSupported("child_process is only supported on macOS")
+      throw ChildProcessError("child_process is only supported on macOS")
       #endif
     }
 
     Function("kill") { (id: String, signal: String?) throws -> Bool in
       #if os(macOS)
       guard let managed = self.registry.get(id) else {
-        throw ChildProcessError.invalidProcess("Unknown child process: \(id)")
+        throw ChildProcessError("Unknown child process: \(id)")
       }
       let sig = signalNumber(from: signal ?? "SIGTERM")
       return Darwin.kill(managed.process.processIdentifier, sig) == 0
       #else
-      throw ChildProcessError.notSupported("child_process is only supported on macOS")
+      throw ChildProcessError("child_process is only supported on macOS")
       #endif
     }
 
@@ -302,12 +295,12 @@ public final class ExpoChildProcessModule: Module {
         let stdinPipe = managed.stdinPipe,
         let data = Data(base64Encoded: base64Data)
       else {
-        throw ChildProcessError.invalidProcess("Unable to write to stdin for process: \(id)")
+        throw ChildProcessError("Unable to write to stdin for process: \(id)")
       }
       stdinPipe.fileHandleForWriting.write(data)
       return true
       #else
-      throw ChildProcessError.notSupported("child_process is only supported on macOS")
+      throw ChildProcessError("child_process is only supported on macOS")
       #endif
     }
 
@@ -316,12 +309,12 @@ public final class ExpoChildProcessModule: Module {
       guard let managed = self.registry.get(id),
         let stdinPipe = managed.stdinPipe
       else {
-        throw ChildProcessError.invalidProcess("Unable to close stdin for process: \(id)")
+        throw ChildProcessError("Unable to close stdin for process: \(id)")
       }
       try stdinPipe.fileHandleForWriting.close()
       return true
       #else
-      throw ChildProcessError.notSupported("child_process is only supported on macOS")
+      throw ChildProcessError("child_process is only supported on macOS")
       #endif
     }
 
@@ -338,7 +331,7 @@ public final class ExpoChildProcessModule: Module {
       #if os(macOS)
       return try self.spawnProcessSync(config)
       #else
-      throw ChildProcessError.notSupported("child_process is only supported on macOS")
+      throw ChildProcessError("child_process is only supported on macOS")
       #endif
     }
   }
@@ -427,7 +420,7 @@ public final class ExpoChildProcessModule: Module {
       try process.run()
     } catch {
       send(["id": id, "type": "error", "message": error.localizedDescription])
-      throw ChildProcessError.launchFailure("Failed to launch: \(error.localizedDescription)")
+      throw ChildProcessError(error)
     }
 
     if spec.detached {
