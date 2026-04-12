@@ -1,4 +1,4 @@
-import { requireNativeModule } from "expo-modules-core";
+import { requireNativeModule, type EventSubscription } from "expo-modules-core";
 
 interface NativeSpawnConfig {
   file: string;
@@ -44,14 +44,24 @@ export interface ChildProcessNativeEvent {
   message?: string;
 }
 
-export interface ExpoChildProcessNativeModule {
+export type ExpoChildProcessNativeModule = {
   spawn(config: NativeSpawnConfig): NativeSpawnResult;
   kill(id: string, signal: string | null): boolean;
   writeToStdin(id: string, base64Data: string): boolean;
   closeStdin(id: string): boolean;
   cleanup(id: string): boolean;
   spawnSync(config: NativeSpawnSyncConfig): NativeSpawnSyncResult;
-}
+
+  addListener(
+    eventName: "onChildProcessEvent",
+    listener: (event: ChildProcessNativeEvent) => void,
+  ): EventSubscription;
+  removeListener(
+    eventName: "onChildProcessEvent",
+    listener: (event: ChildProcessNativeEvent) => void,
+  ): void;
+  removeAllListeners(eventName: "onChildProcessEvent"): void;
+};
 
 export const nativeModule = requireNativeModule<ExpoChildProcessNativeModule>("ExpoChildProcess");
 

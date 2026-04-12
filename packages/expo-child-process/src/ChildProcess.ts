@@ -5,19 +5,15 @@
 import type { ChildProcess as NodeChildProcess } from "child_process";
 import type { Readable, Writable } from "stream";
 
-import { EventEmitter as ExpoEventEmitter } from "expo-modules-core";
-
 import { ChildReadable } from "./ChildReadable";
 import { ChildWritable } from "./ChildWritable";
 import { nativeModule, type ChildProcessNativeEvent } from "./native";
 import { NodeEventEmitter } from "./NodeEventEmitter";
 
 const childProcessRegistry = new Map<string, ChildProcess>();
-const nativeEventEmitter = new ExpoEventEmitter(nativeModule as any);
 
-nativeEventEmitter.addListener("onChildProcessEvent", (value: unknown) => {
-  const event = parseNativeEvent(value);
-  if (!event) return;
+nativeModule.addListener("onChildProcessEvent", (event) => {
+  if (!isChildProcessNativeEvent(event)) return;
   const child = childProcessRegistry.get(event.id);
   if (!child) return;
   child._handleNativeEvent(event);
@@ -278,20 +274,18 @@ export class ChildProcess extends NodeEventEmitter implements NodeChildProcess {
   }
 }
 
-function parseNativeEvent(value: unknown): ChildProcessNativeEvent | null {
-  if (!value || typeof value !== "object") return null;
-  const event = value as Partial<ChildProcessNativeEvent>;
-  if (typeof event.id !== "string") return null;
-  if (
-    event.type !== "spawn" &&
-    event.type !== "stdout" &&
-    event.type !== "stderr" &&
-    event.type !== "stdoutEnd" &&
-    event.type !== "stderrEnd" &&
-    event.type !== "exit" &&
-    event.type !== "error"
-  ) {
-    return null;
-  }
-  return event as ChildProcessNativeEvent;
+function isChildProcessNativeEvent(
+  value: ChildProcessNativeEvent,
+): value is ChildProcessNativeEvent {
+  if (!value || typeof value !== "object") return false;
+  if (typeof value.id !== "string") return false;
+  return (
+    value.type === "spawn" ||
+    value.type === "stdout" ||
+    value.type === "stderr" ||
+    value.type === "stdoutEnd" ||
+    value.type === "stderrEnd" ||
+    value.type === "exit" ||
+    value.type === "error"
+  );
 }
