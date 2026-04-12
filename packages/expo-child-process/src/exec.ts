@@ -14,11 +14,13 @@ type ExecCallback = Parameters<Unpromisified<typeof import("node:child_process")
 
 // ── normalizeExecArgs ──────────────────────────────────────────────────────
 
-function normalizeExecArgs(
-  command: string,
-  options?: ExecOptions | ExecCallback | null,
-  callback?: ExecCallback,
-): { file: string; options: ExecOptions; callback: ExecCallback | undefined } {
+const normalizeExecArgs: (
+  ...args: Parameters<Unpromisified<typeof import("node:child_process").exec>>
+) => { file: string; options: ExecOptions; callback: ExecCallback | undefined } = (
+  command,
+  options,
+  callback,
+) => {
   if (typeof command !== "string") {
     throw new TypeError('The "command" argument must be of type string');
   }
@@ -31,7 +33,7 @@ function normalizeExecArgs(
   const opts: ExecOptions = { ...options };
 
   return { file: command, options: opts, callback };
-}
+};
 
 const execImpl: Unpromisified<typeof import("node:child_process").exec> = (
   command,

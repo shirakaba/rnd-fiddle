@@ -8,7 +8,7 @@
 
 import { Buffer as RuntimeBuffer } from "buffer";
 
-import type { ExecFileException, ExecFileOptions, Unpromisified } from "./types";
+import type { ExecFileException, ExecFileOptions, SpawnOptions, Unpromisified } from "./types";
 
 import { MAX_BUFFER } from "./constants";
 import { spawn } from "./spawn";
@@ -55,7 +55,7 @@ function normalizeExecFileArgs(
   return {
     file,
     args: normalizedArgs,
-    options: (options as ExecFileOptions) ?? {},
+    options: options ?? {},
     callback: callback ?? undefined,
   };
 }
@@ -74,16 +74,20 @@ const execFileImpl: Unpromisified<typeof import("node:child_process").execFile> 
   );
   const { args, callback: cb } = normalized;
   const options = {
-    encoding: "utf8" as string | null,
+    encoding: "utf8",
     timeout: 0,
     maxBuffer: MAX_BUFFER,
-    killSignal: "SIGTERM" as string | number,
-    cwd: undefined as string | undefined,
-    env: undefined as Record<string, string | undefined> | undefined,
-    shell: false as boolean | string,
-    signal: undefined as AbortSignal | undefined,
+    killSignal: "SIGTERM",
+    cwd: undefined,
+    env: undefined,
+    shell: false,
+    signal: undefined,
     ...normalized.options,
-  };
+  } as const satisfies SpawnOptions & ExecFileOptions;
+
+  if (!options.encoding || options.encoding !== "buffer" || !isBufferEncoding(options.encoding)) {
+    throw new Error(`Invalid encoding: ${options.encoding}`);
+  }
 
   const child = spawn(file, args, {
     cwd: options.cwd,
@@ -108,7 +112,7 @@ const execFileImpl: Unpromisified<typeof import("node:child_process").execFile> 
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let ex: (ExecFileException & { cmd?: string }) | null = null;
 
-  function exitHandler(code: number | null, signal: string | null): void {
+  function exitHandler(code: number | null, signal: NodeJS.Signals | null): void {
     if (exited) return;
     exited = true;
 
@@ -117,11 +121,21 @@ const execFileImpl: Unpromisified<typeof import("node:child_process").execFile> 
       timeoutId = null;
     }
 
-    const stdout = joinOutput(stdoutChunks, useBufferEncoding, options.encoding ?? "utf8");
-    const stderr = joinOutput(stderrChunks, useBufferEncoding, options.encoding ?? "utf8");
+    let encoding: BufferEncoding;
+    if (options.encoding) {
+      if (!isBufferEncoding(options.encoding)) {
+        throw new Error(`Invalid encoding: ${options.encoding}`);
+      }
+      encoding = options.encoding;
+    } else {
+      encoding = "utf8";
+    }
+
+    const stdout = joinOutput(stdoutChunks, useBufferEncoding, encoding);
+    const stderr = joinOutput(stderrChunks, useBufferEncoding, encoding);
 
     if (!ex && code === 0 && signal === null) {
-      cb(null, stdout as any, stderr as any);
+      cb?.(null, stdout as any, stderr as any);
       return;
     }
 
@@ -136,7 +150,7 @@ const execFileImpl: Unpromisified<typeof import("node:child_process").execFile> 
       ex.signal = signal ?? undefined;
     }
     ex.cmd = cmd;
-    cb(ex, stdout as any, stderr as any);
+    cb?.(ex, stdout as any, stderr as any);
   }
 
   function errorHandler(e: Error): void {
@@ -197,15 +211,34 @@ const execFileImpl: Unpromisified<typeof import("node:child_process").execFile> 
     });
   }
 
-  child.addListener("close", exitHandler as any);
+  child.addListener("close", exitHandler);
   child.addListener("error", errorHandler);
 
   return child;
 };
 
-export const execFile: typeof import("node:child_process").execFile = Object.assign(execFileImpl, {
+function isBufferEncoding(encoding: string): encoding is BufferEncoding {
+  return encodings.has(encoding as BufferEncoding);
+}
+
+const encodings = new Set<BufferEncoding>([
+  "ascii",
+  "utf8",
+  "utf-8",
+  "utf16le",
+  "utf-16le",
+  "ucs2",
+  "ucs-2",
+  "base64",
+  "base64url",
+  "latin1",
+  "binary",
+  "hex",
+]);
+
+export const execFile = Object.assign(execFileImpl, {
   __promisify__: execFilePromisified,
-});
+}) as unknown as typeof import("node:child_process").execFile;
 
 // ── execFile.__promisify__ ─────────────────────────────────────────────────
 

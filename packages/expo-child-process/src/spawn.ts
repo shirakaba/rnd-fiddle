@@ -3,7 +3,7 @@
  * https://github.com/nodejs/node/blob/main/lib/child_process.js
  */
 
-import type { SpawnOptions, SpawnOptionsWithoutStdio, StdioOptions } from "./types";
+import type { SpawnOptions, SpawnOptionsWithoutStdio, StdioOptions, Unpromisified } from "./types";
 
 import { ChildProcess } from "./ChildProcess";
 import { normalizeSignal } from "./constants";
@@ -120,11 +120,11 @@ export function buildNativeConfig(
 
 // ── spawn ──────────────────────────────────────────────────────────────────
 
-export const spawn: typeof import("child_process").spawn = (
-  command: string,
-  args?: readonly string[] | SpawnOptionsWithoutStdio,
-  options?: SpawnOptions,
-): ChildProcess => {
+export const spawn: Unpromisified<typeof import("child_process").spawn> = (
+  command,
+  args,
+  options,
+) => {
   const normalized = normalizeSpawnArguments(command, args, options);
   const opts = normalized.options;
 
