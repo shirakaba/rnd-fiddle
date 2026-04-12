@@ -35,6 +35,7 @@
     "eventemitter3": "^5.0.4"
   },
   "devDependencies": {
+    "@typescript/native-preview": "catalog:",
     "react-native": "catalog:"
   },
   "peerDependencies": {

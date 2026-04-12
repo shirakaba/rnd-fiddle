@@ -17,11 +17,15 @@
       "types": "./index.d.ts"
     }
   },
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
   "dependencies": {
     "eventemitter3": "^5.0.4"
   },
   "devDependencies": {
     "@types/node": "^24.12.0",
+    "@typescript/native-preview": "catalog:",
     "electron": "^41.1.1",
     "react-native-webview": "catalog:"
   },
