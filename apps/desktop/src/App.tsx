@@ -16,7 +16,7 @@ export default function App() {
   const ref = useRef<WebView>(null);
 
   useEffect(() => {
-    const child = spawn("/bin/ls", ["/Users/jamie"]);
+    const child = spawn("echo", ["$PATH"], { shell: "/bin/zsh" });
     child.on("error", (error) => {
       console.error("[error]", error);
     });
