@@ -156,10 +156,22 @@ export const spawn: Unpromisified<typeof import("child_process").spawn> = (
   let info;
   try {
     info = nativeModule.spawn(config);
-  } catch (err: any) {
+  } catch (error: unknown) {
+    if (!(error instanceof Error)) {
+      throw new Error(`Expected all native errors to extend Error.`);
+    }
+
+    // Slice off the ExpoModulesCore stack frame and show just the cause.
+    const pattern = "→ Caused by: ChildProcessError: ";
+    const index = error.message.indexOf(pattern);
+    if (index > -1) {
+      error.name = "ChildProcessError";
+      error.message = error.message.slice(index + pattern.length);
+    }
+
     // Emit error async, matching Node.js behavior
     queueMicrotask(() => {
-      child.emit("error", err instanceof Error ? err : new Error(String(err)));
+      child.emit("error", error);
       child.emit("close", null, null);
     });
     return child;

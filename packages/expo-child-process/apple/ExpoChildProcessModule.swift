@@ -237,7 +237,7 @@ private func signalName(from number: Int32) -> String {
 
 // MARK: - Errors
 
-private class ChildProcessError: Exception {
+private final class ChildProcessError: Exception {
   private let errorDescription: String
 
   init(_ message: String, file: String = #fileID, line: UInt = #line, function: String = #function) {
