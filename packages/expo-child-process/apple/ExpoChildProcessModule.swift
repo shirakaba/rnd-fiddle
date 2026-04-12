@@ -176,6 +176,10 @@ private enum ChildProcessError: Error, CustomStringConvertible {
       return msg
     }
   }
+  
+  public var localizedDescription: String {
+    return self.description
+  }
 }
 
 // MARK: - Stdio helpers
@@ -270,7 +274,11 @@ public final class ExpoChildProcessModule: Module {
 
     Function("spawn") { (config: [String: Any]) throws -> [String: Any] in
       #if os(macOS)
-      return try self.spawnProcess(config)
+      do {
+        return try self.spawnProcess(config)
+      } catch let error as ChildProcessError {
+        throw UnexpectedException(error)
+      }
       #else
       throw ChildProcessError.notSupported("child_process is only supported on macOS")
       #endif

@@ -18,9 +18,12 @@ export default function App() {
   const ref = useRef<WebView>(null);
 
   useEffect(() => {
-    const cp = spawn("node --version");
+    const cp = spawn("echo HEYA");
+    cp.on("error", (error) => {
+      console.error("Child process threw error", error);
+    });
     const { stdout, stderr } = cp;
-    console.log("got stdout", stdout);
+    console.log("got stdout, stderr", { stdout, stderr });
     stdout?.on("data", (buffer: NodeBuffer) => {
       console.log("[buffer]", buffer);
       console.log("[bufferstr]", buffer.toString());
