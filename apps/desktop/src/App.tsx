@@ -18,7 +18,7 @@ export default function App() {
   const ref = useRef<WebView>(null);
 
   useEffect(() => {
-    const cp = spawn("echo HEYA");
+    const cp = spawn("/bin/ls", ["/bin"]);
     cp.on("error", (error) => {
       console.error("Child process threw error", error);
     });
