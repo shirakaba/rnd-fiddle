@@ -1,7 +1,12 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "paths": {
+      "expo-modules-core/ts-declarations/*": [
+        "./node_modules/expo-modules-core/src/ts-declarations/*"
+      ]
+    }
   },
   "include": ["src"]
 }
